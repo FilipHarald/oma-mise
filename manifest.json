@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "local.mise-status",
+  "name": "Mise dotfiles",
+  "version": "0.1.0",
+  "description": "Dotfile sync health and watcher controls for mise",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "Mise dotfiles",
+    "description": "Dotfile sync health",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}
