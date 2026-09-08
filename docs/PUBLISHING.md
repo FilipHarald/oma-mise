@@ -28,7 +28,26 @@ is a checklist, not authorization to change visibility or publish social posts.
   create a GitHub release with requirements, known limitations and screenshots.
   Neither a release nor a tag is required by the Git-based installer.
 
-## Distribution
+## Optional marketplace submission
+
+Direct Git installation does not require a marketplace listing. For a curated
+listing, the repository includes a root [`preview.png`](../preview.png): the
+native green popup with staged demo data, with image metadata stripped.
+
+- Use the marketplace's current submission form and a full reviewed commit SHA.
+- Run the security baseline on that exact snapshot and resolve manual findings;
+  a clean pattern scan is not a full security review. Watcher service management
+  is an expected manual-review capability, not an automatic security pass.
+- Keep the reviewed commit unchanged while approval is pending.
+- The remote marketplace snapshot resolver requires a public repository. While
+  private, run the analyzer on a local immutable Git snapshot instead and label
+  that result as local analysis, not marketplace validation or approval.
+- Review the [removal disclosure](../README.md#removing) and the
+  [migration safety contract](MIGRATION.md) along with runtime code.
+
+No submission, release, tag, or visibility change is authorized by this checklist.
+
+## Git distribution
 
 The installed Omarchy CLI supports direct Git distribution. It clones a repo,
 validates `manifest.json`, checks for duplicate plugin IDs, discovers it and can

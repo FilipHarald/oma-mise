@@ -197,15 +197,14 @@ class StatusTests(unittest.TestCase):
 
     def test_command_is_read_only_home_scoped_and_prefers_local_mise(self):
         self.assertTrue(hasattr(self.status, 'collect'), 'collect must exist')
-        with patch.object(self.status.os, 'access', return_value=True), \
-             patch.object(self.status.Path, 'is_file', return_value=True), \
-             patch.object(self.status.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, json.dumps(healthy()), 'SECRET')) as run:
+        with patch.object(self.status.runtime, 'mise_executable', return_value=str(Path.home() / '.local/bin/mise')), \
+             patch.object(self.status.runtime, 'run', return_value=subprocess.CompletedProcess([], 0, json.dumps(healthy()), 'SECRET')) as run:
             result = self.status.collect(now=NOW)
         self.assertEqual(result['level'], 'green')
         run.assert_called_once_with(
             [str(Path.home() / '.local/bin/mise'), 'bootstrap', 'dotfiles', 'status', '--json'],
-            cwd=str(Path.home()), capture_output=True, text=True, timeout=15,
-            check=False, stdin=subprocess.DEVNULL)
+            cwd=str(Path.home()), env=self.status.runtime.environment(Path.home()),
+            timeout=15, stdout_limit=1048576, stderr_limit=65536)
 
     def test_subprocess_failures_are_sanitized_yellow(self):
         cases = [FileNotFoundError('SECRET'), PermissionError('SECRET'),
@@ -216,20 +215,49 @@ class StatusTests(unittest.TestCase):
                  subprocess.CompletedProcess([], 0, '', 'SECRET')]
         for case in cases:
             with self.subTest(case=type(case).__name__), \
-                 patch.object(self.status.subprocess, 'run') as run:
+                 patch.object(self.status.runtime, 'mise_executable', return_value='/usr/bin/mise'), \
+                 patch.object(self.status.runtime, 'run') as run:
                 if isinstance(case, Exception):
                     run.side_effect = case
                 else:
                     run.return_value = case
                 result = self.status.collect(now=NOW)
+                run.assert_called_once()
                 self.assertEqual(result['level'], 'yellow')
                 self.assertNotIn('SECRET', str(result))
 
     def test_path_fallback(self):
-        with patch.object(self.status.os, 'access', return_value=False), \
-             patch.object(self.status.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, '{}', '')) as run:
+        with patch.object(self.status.runtime, 'mise_executable', return_value='/usr/bin/mise'), \
+             patch.object(self.status.runtime, 'run', return_value=subprocess.CompletedProcess([], 0, '{}', '')) as run:
             self.status.collect(now=NOW)
-        self.assertEqual(run.call_args.args[0][0], 'mise')
+        self.assertEqual(run.call_args.args[0][0], '/usr/bin/mise')
+
+    def test_input_cardinality_and_numeric_limits(self):
+        for key, value in (('files', [{'state': 'tracked'}] * 4097),
+                           ('edits', [None] * 4097)):
+            payload = healthy()
+            payload[key] = value
+            self.assertEqual(self.evaluate(payload)['level'], 'yellow')
+        for value in (1000001, 10 ** 4000, True, -1):
+            payload = healthy()
+            payload['history']['checkpoints'] = value
+            result = self.evaluate(payload)
+            self.assertEqual(result['level'], 'yellow')
+            self.assertLess(len(json.dumps(result)), 8192)
+
+    def test_cancellation_returns_safe_json(self):
+        with patch.object(self.status.runtime, 'mise_executable', return_value='/usr/bin/mise'), \
+             patch.object(self.status.runtime, 'run', side_effect=KeyboardInterrupt) as run:
+            self.assertEqual(self.status.collect(now=NOW)['level'], 'yellow')
+            run.assert_called_once()
+
+    def test_oversized_objects_and_extreme_timestamps_fail_closed(self):
+        payload = healthy()
+        payload['history'].update({f'extra{i}': None for i in range(65)})
+        self.assertNotEqual(self.evaluate(payload)['level'], 'green')
+        payload = healthy()
+        payload['history']['sync']['last_fetch'] = '0001-01-01T00:00:00+23:59'
+        self.assertEqual(self.evaluate(payload)['level'], 'yellow')
 
     def test_cli_prints_exactly_one_json_object(self):
         self.assertTrue(hasattr(self.status, 'main'), 'main must exist')

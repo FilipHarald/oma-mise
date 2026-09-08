@@ -40,6 +40,29 @@ TestCase {
     compare(findChild(content, "copyCommandButton").visible, false)
     content.status = original
   }
+  function test_hostile_model_and_plain_text() {
+    var original = content.status
+    for (var bad of [null, {level: "green", summary: "bad", details: [null]},
+        {level: "green", summary: "bad", details: new Array(10000).fill("Last fetch: x")}]) {
+      content.status = bad
+      compare(findChild(content, "statusHeading").text, "Status unavailable")
+    }
+    content.status = {level: "yellow", summary: "<img src='file:///missing'>", details: []}
+    compare(findChild(content, "statusHeading").text, content.status.summary)
+    function check(item) {
+      if (item.textFormat !== undefined) compare(item.textFormat, Text.PlainText)
+      for (var child of item.children || []) check(child)
+    }
+    check(content)
+    content.status = original
+    waitForRendering(content)
+  }
+  function test_unknown_never_controllable() {
+    content.watcherState = "unknown"
+    content.watcherCanControl = true
+    compare(findChild(content, "watcherButton").enabled, false)
+    content.watcherCanControl = false
+  }
   function test_date_hover() {
     var times = {}
     for (var field of ["publish", "fetch", "apply"]) times[field] = new Date(Date.now() - 5000).toISOString()

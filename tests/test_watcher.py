@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 PATH = Path(__file__).resolve().parents[1] / "watcher.py"
 UNIT = "dev.mise.mise-history.service"
-SHOW = ["systemctl", "--user", "show", UNIT,
+SHOW = ["/usr/bin/systemctl", "--user", "show", UNIT,
         "--property=LoadState,ActiveState,SubState"]
 
 
@@ -26,7 +26,7 @@ class WatcherTests(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         stdout, stderr = io.StringIO(), io.StringIO()
-        with patch.object(module.subprocess, "run", side_effect=results) as run:
+        with patch.object(module.runtime, "run", side_effect=results) as run:
             with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
                 code = module.main(args)
         self.assertEqual(stderr.getvalue(), "")
@@ -37,9 +37,9 @@ class WatcherTests(unittest.TestCase):
         self.assertIsInstance(data["error"], str)
         self.assertNotIn("PRIVATE", stdout.getvalue())
         for call in run.call_args_list:
-            self.assertEqual(call.kwargs["stdin"], subprocess.DEVNULL)
-            self.assertTrue(call.kwargs["capture_output"])
-            self.assertTrue(call.kwargs["text"])
+            self.assertEqual(call.kwargs["stdout_limit"], 16384)
+            self.assertEqual(call.kwargs["stderr_limit"], 16384)
+            self.assertEqual(call.kwargs["env"]["PATH"], "/usr/bin:/bin")
             self.assertEqual(call.kwargs["timeout"], 15)
             self.assertFalse(call.kwargs.get("shell", False))
         return code, data, run
@@ -87,7 +87,7 @@ class WatcherTests(unittest.TestCase):
                 self.assertEqual(code, 0)
                 self.assertEqual(data, {"state": state, "can_control": True, "error": ""})
                 self.assertEqual([c.args[0] for c in run.call_args_list],
-                                 [SHOW, ["systemctl", "--user", action, UNIT], SHOW])
+                                 [SHOW, ["/usr/bin/systemctl", "--user", action, UNIT], SHOW])
 
     def test_actions_reject_unavailable_or_transitioning_unit(self):
         for before in (reply(load="not-found"), reply("activating", "start"),

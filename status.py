@@ -1,29 +1,39 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3 -I
 """Read-only mise dotfiles status, with a small, non-sensitive JSON contract."""
 from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
 import subprocess
+import importlib.util
+
+# Isolated Python excludes the script directory. Load only this trusted sibling,
+# never add a directory to sys.path or resolve a module through cwd/PYTHONPATH.
+_spec = importlib.util.spec_from_file_location('oma_mise_runtime', Path(__file__).resolve().with_name('runtime.py'))
+runtime = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(runtime)
+
+MAX_ITEMS = 4096
+MAX_NUMBER = 1000000
+MAX_FIELDS = 64
 
 
 def collect(now=None):
     """Run only the read-only status command, outside the plugin repository."""
     try:
         home = Path.home()
-        local = home / '.local/bin/mise'
-        executable = str(local) if local.is_file() and os.access(local, os.X_OK) else 'mise'
-        result = subprocess.run(
+        executable = runtime.mise_executable(home)
+        result = runtime.run(
             [executable, 'bootstrap', 'dotfiles', 'status', '--json'],
-            cwd=str(home), capture_output=True, text=True, timeout=15,
-            check=False, stdin=subprocess.DEVNULL)
+            cwd=str(home), env=runtime.environment(home), timeout=15,
+            stdout_limit=1048576, stderr_limit=65536)
         if result.returncode:
             reason = 'mise status command failed; review it locally'
         else:
             return evaluate(json.loads(result.stdout), now=now)
     except subprocess.TimeoutExpired:
         reason = 'mise status timed out after 15 seconds'
-    except (OSError, RuntimeError):
+    except (OSError, RuntimeError, subprocess.SubprocessError, KeyboardInterrupt):
         reason = 'mise status could not run; check mise installation and permissions'
     except (ValueError, TypeError, OverflowError):
         reason = 'mise status returned malformed data'
@@ -34,16 +44,20 @@ def collect(now=None):
 
 
 def _object(value):
-    return value if isinstance(value, dict) else {}
+    return value if isinstance(value, dict) and len(value) <= MAX_FIELDS else {}
 
 
 def _number(value):
-    return type(value) is int and value >= 0
+    return type(value) is int and 0 <= value <= MAX_NUMBER
 
 
 def _date(value):
+    if not isinstance(value, str) or len(value) > 64:
+        return None
     try:
         stamp = datetime.fromisoformat(value)
+        # Reject boundary dates whose offset overflows on local conversion.
+        stamp.astimezone()
         return stamp if stamp.tzinfo is not None else None
     except (TypeError, ValueError, OverflowError):
         return None
@@ -75,7 +89,7 @@ def evaluate(payload, now=None):
 
     def count(source, key, label, is_list=True):
         value = source.get(key)
-        valid = isinstance(value, list) if is_list else _number(value)
+        valid = isinstance(value, list) and len(value) <= MAX_ITEMS if is_list else _number(value)
         if not valid:
             warnings.append('Some status fields are missing or unrecognized')
             counts.append(f'{label}: unknown')
@@ -92,8 +106,8 @@ def evaluate(payload, now=None):
     files = payload.get('files')
     if files == []:
         warnings.append('No dotfiles are configured')
-    if isinstance(files, list) and any(
-        not isinstance(item, dict) or item.get('state') != 'tracked'
+    if isinstance(files, list) and len(files) <= MAX_ITEMS and any(
+        not isinstance(item, dict) or len(item) > MAX_FIELDS or item.get('state') != 'tracked'
         for item in files
     ):
         warnings.append('File states need review')

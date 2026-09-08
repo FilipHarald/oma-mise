@@ -6,6 +6,7 @@ import "../Presentation.js" as Presentation
 Column {
   id: root
   property var status: ({summary: "Checking dotfiles…", level: "yellow", details: []})
+  readonly property var safeStatus: Presentation.validStatus(status) ? status : Presentation.decode("")
   property bool refreshing: false
   property string watcherState: "unknown"
   property bool watcherCanControl: false
@@ -18,13 +19,13 @@ Column {
   property int captionSize: 12
   property real unit: 1
   readonly property string reviewKind: {
-    var reasons = (root.status.details || []).join("\n")
+    var reasons = (root.safeStatus.details || []).join("\n")
     if (reasons.indexOf("Pending dotfiles changes need review") !== -1) return "changes"
     if (reasons.indexOf("Sync conflicts need review") !== -1) return "conflicts"
-    return root.status.level === "yellow" || root.status.level === "red" ? "status" : ""
+    return root.safeStatus.level === "yellow" || root.safeStatus.level === "red" ? "status" : ""
   }
   readonly property var counts: {
-    var lines = root.status.details || []
+    var lines = root.safeStatus.details || []
     for (var i = 0; i < lines.length; i++) {
       var match = /^Files: (\d+|unknown) \| Checkpoints: (\d+|unknown)$/.exec(lines[i])
       if (match) return match
@@ -33,14 +34,7 @@ Column {
   }
   signal refreshRequested()
   signal watcherToggleRequested()
-  readonly property string reviewCommand: {
-    var base = 'mise -C "$HOME" bootstrap dotfiles '
-    if (reviewKind === "") return ""
-    var commands = [base + "status"]
-    if (reviewKind === "changes") commands.push(base + "history diff")
-    if (reviewKind !== "status") commands.push(base + "pull --dry-run")
-    return commands.join("; ")
-  }
+  readonly property string reviewCommand: Presentation.reviewCommand(reviewKind)
   signal copyRequested(string command)
   spacing: 12 * unit
 
@@ -63,10 +57,10 @@ Column {
         objectName: "statusHeading"
         anchors.verticalCenter: parent.verticalCenter
         width: Math.min(implicitWidth, parent.width - (copyButton.visible ? copyButton.width + parent.spacing : 0))
-        text: root.status.summary
+        text: root.safeStatus.summary
         textFormat: Text.PlainText
         elide: Text.ElideRight
-        color: Presentation.colorFor(root.status.level)
+        color: Presentation.colorFor(root.safeStatus.level)
         font.family: root.fontFamily
         font.pixelSize: root.bodySize
         font.bold: true
@@ -84,6 +78,7 @@ Column {
         ToolTip.delay: 500
         ToolTip.text: "Copy review command"
         contentItem: Text {
+          textFormat: Text.PlainText
           text: "\uf0c5"
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
@@ -99,7 +94,7 @@ Column {
       objectName: "statusReason"
 
       width: parent.width
-      text: (root.status.details || []).filter(function(line) {
+      text: (root.safeStatus.details || []).filter(function(line) {
         return line.indexOf("Watcher: ") !== 0
           && !/^Files: (\d+|unknown) \| Checkpoints: (\d+|unknown)$/.test(line)
           && !/^Last (publish|fetch|apply): /.test(line)
@@ -128,6 +123,7 @@ Column {
       visible: root.counts !== null
       spacing: 8 * root.unit
       Text {
+        textFormat: Text.PlainText
         objectName: "filesIcon"
         text: "\uf0c5"
         color: root.foreground
@@ -135,12 +131,14 @@ Column {
         font.pixelSize: root.captionSize
       }
       Text {
+        textFormat: Text.PlainText
         text: root.counts ? "Files: " + root.counts[1] : ""
         color: root.foreground
         font.family: root.fontFamily
         font.pixelSize: root.captionSize
       }
       Text {
+        textFormat: Text.PlainText
         objectName: "checkpointsIcon"
         text: "\uf1da"
         leftPadding: 8 * root.unit
@@ -149,6 +147,7 @@ Column {
         font.pixelSize: root.captionSize
       }
       Text {
+        textFormat: Text.PlainText
         text: root.counts ? "Checkpoints: " + root.counts[2] : ""
         color: root.foreground
         font.family: root.fontFamily
@@ -163,6 +162,7 @@ Column {
     anchors.verticalCenter: parent.verticalCenter
     spacing: 6 * root.unit
     Text {
+      textFormat: Text.PlainText
       objectName: "watcherLabel"
       anchors.verticalCenter: parent.verticalCenter
       text: "Watcher " + root.watcherState
@@ -183,13 +183,14 @@ Column {
       width: 24 * root.unit
       height: 24 * root.unit
       text: root.watcherState === "running" ? "\uf04c" : "\uf04b"
-      enabled: root.watcherCanControl && !root.watcherBusy
+      enabled: root.watcherCanControl && !root.watcherBusy && (root.watcherState === "running" || root.watcherState === "stopped")
       focusPolicy: Qt.NoFocus
       hoverEnabled: true
       Accessible.name: root.watcherState === "running" ? "Pause watcher" : "Resume watcher"
       ToolTip.visible: watcherHover.hovered
       ToolTip.text: root.watcherState === "running" ? "Pause automatic saving and syncing" : "Resume automatic saving and syncing"
       contentItem: Text {
+        textFormat: Text.PlainText
         text: watcherButton.text
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
@@ -202,7 +203,7 @@ Column {
     }
   }
   Repeater {
-    model: (root.status.details || []).filter(function(line) { return /^Last (publish|fetch|apply): /.test(line) })
+    model: (root.safeStatus.details || []).filter(function(line) { return /^Last (publish|fetch|apply): /.test(line) })
     delegate: Item {
       id: detail
       required property string modelData
@@ -261,7 +262,7 @@ Column {
             onTriggered: activityDate.hoverTime = Date.now()
           }
           ToolTip.visible: dateHover.hovered
-          ToolTip.text: Presentation.age(detail.activity && root.status.timestamps ? root.status.timestamps[detail.match[2]] : null, hoverTime)
+          ToolTip.text: Presentation.age(detail.activity && root.safeStatus.timestamps ? root.safeStatus.timestamps[detail.match[2]] : null, hoverTime)
           Layout.fillWidth: true
           horizontalAlignment: Text.AlignRight
           text: detail.activity ? detail.match[3] : ""

@@ -4,6 +4,7 @@ import Quickshell
 import qs.Commons
 import qs.Ui
 import "ui"
+import "Presentation.js" as Presentation
 
 Panel {
   id: root
@@ -17,12 +18,14 @@ Panel {
   implicitHeight: bar && bar.vertical ? barSlot : (bar ? bar.barSize : Style.bar.sizeHorizontal)
   onOpenedChanged: if (opened) StatusStore.refresh()
 
+  ReviewClipboard { id: clipboard }
+
   BarIconButton {
     id: button
     anchors.fill: parent
     bar: root.bar
     slotSize: root.barSlot
-    tooltipText: "Mise dotfiles — " + StatusStore.status.summary
+    tooltipText: Presentation.hostTooltip(StatusStore.status.summary)
     iconComponent: Component {
       Item {
         StatusIcon {
@@ -79,7 +82,7 @@ Panel {
           onRefreshRequested: StatusStore.refresh()
           onWatcherToggleRequested: StatusStore.toggleWatcher()
           onCopyRequested: function(command) {
-            Quickshell.execDetached(["wl-copy", "--", command])
+            clipboard.copy(command)
           }
         }
       }

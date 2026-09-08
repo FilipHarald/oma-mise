@@ -28,13 +28,14 @@ class ReviewTests(unittest.TestCase):
         enter(patch.object(review.Path, 'home', return_value=self.home))
         enter(patch.object(review.Path, 'is_file', return_value=False))
         self.access = enter(patch.object(review.os, 'access', return_value=False))
-        self.run_command = enter(patch.object(review.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0)))
+        self.executable = enter(patch.object(review.runtime, 'mise_executable', return_value='/usr/bin/mise'))
+        self.run_command = enter(patch.object(review.runtime, 'run', return_value=subprocess.CompletedProcess([], 0, '', '')))
         self.prompt = enter(patch('builtins.input', return_value=''))
 
-    def command(self, *args, executable='mise'):
+    def command(self, *args, executable='/usr/bin/mise'):
         return call([executable, 'bootstrap', 'dotfiles', *args],
-                    cwd=str(self.home), timeout=30, check=False,
-                    stdin=subprocess.DEVNULL)
+                    cwd=str(self.home), env=review.runtime.environment(self.home),
+                    timeout=30, stdout_limit=1048576, stderr_limit=65536)
 
     def test_conflicts_runs_status_then_read_only_pull_in_home(self):
         self.assertEqual(review.main(['conflicts']), 0)
@@ -45,6 +46,16 @@ class ReviewTests(unittest.TestCase):
     def test_general_status_review_does_not_pull_or_diff(self):
         self.assertEqual(review.main(['status']), 0)
         self.assertEqual(self.run_command.call_args_list, [self.command('status')])
+
+    def test_terminal_output_is_visible_without_control_sequences(self):
+        self.run_command.return_value = subprocess.CompletedProcess([], 0,
+            'diff visible\n\x1b]52;c;payload\x07\r', 'warning\n\x9b31m')
+        self.assertEqual(review.main(['status']), 0)
+        text = self.output.getvalue()
+        self.assertIn('diff visible\n', text)
+        self.assertIn('warning\n', text)
+        for control in ('\x1b', '\x07', '\r', '\x9b'):
+            self.assertNotIn(control, text)
 
     def test_changes_adds_history_diff_before_dry_run(self):
         self.assertEqual(review.main(['changes']), 0)
@@ -66,6 +77,7 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(self.run_command.call_args_list[1], self.command('history', 'diff'))
 
     def test_local_executable_is_preferred(self):
+        self.executable.return_value = str(self.home / '.local/bin/mise')
         with patch.object(review.Path, 'is_file', return_value=True):
             self.access.return_value = True
             self.assertEqual(review.main(['conflicts']), 0)
@@ -73,7 +85,7 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(self.run_command.call_args_list,
                          [self.command('status', executable=executable),
                           self.command('pull', '--dry-run', executable=executable)])
-        self.access.assert_called_once_with(self.home / '.local/bin/mise', review.os.X_OK)
+        self.executable.assert_called_once_with(self.home)
 
     def test_nonexecutable_local_file_uses_path(self):
         with patch.object(review.Path, 'is_file', return_value=True):

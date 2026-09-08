@@ -26,6 +26,10 @@ Use the copy icon next to an attention/error heading to copy a read-only review
 command, then paste it into your terminal. The heading and reasons are not clickable;
 the plugin never launches a terminal/editor or runs the copied command.
 General warnings copy `mise -C "$HOME" bootstrap dotfiles status`.
+Copying uses a supervised foreground wl-copy process. Its selection remains
+available while the plugin is loaded, until another copy replaces it. Disabling,
+removing, or reloading the plugin ends that ownership; a separate clipboard
+manager may retain the copied command or its history independently.
 Conflicts also include `pull --dry-run`; pending changes add `history diff`.
 Mixed conflict/pending states include both reviews. Every command is explicitly
 home-scoped and no command applies changes or chooses a conflict resolution.
@@ -49,6 +53,9 @@ from your home directory and read the user service state. Mise itself may render
 trusted templates when checking status. No dotfile contents, credentials, or raw
 CLI errors are shown. The plugin reports local observations, not an independent
 remote check.
+
+See [security boundaries](docs/SECURITY.md) for streaming limits, process cleanup,
+environment isolation, schema validation, and the scope of the security tests.
 
 The watcher button is an explicit write action: it starts/stops only the existing
 systemd user unit `dev.mise.mise-history.service`, verifying its state afterwards.
@@ -98,7 +105,12 @@ logo retains its upstream ownership; see [asset attribution](assets/README.md).
 - Mise with `bootstrap dotfiles status --json` (tested with 2026.9.3)
 - A configured mise dotfiles/history setup
 
-The helper prefers `~/.local/bin/mise`, falling back to `mise` on the shell's PATH.
+The helper prefers the standard Omarchy installation at `~/.local/bin/mise`,
+falling back to `/usr/bin/mise`. It does not search an inherited PATH or accept a
+mise executable override from the environment. The executable must be a regular,
+executable file owned by your user or root and not writable by group/others.
+Symlinked executable entries or directories below the trusted home/system anchor
+are refused. The runtime supervisor uses Linux process APIs available on Omarchy.
 
 ## Local installation
 
@@ -127,7 +139,43 @@ Existing `local.mise-status` installs must follow [the migration guide](docs/MIG
 to preserve their bar placement and settings. Do not install a duplicate alongside it.
 
 To hide it: `omarchy plugin disable io.github.filipharald.oma-mise`.
-To uninstall, disable it first, then remove only the plugin symlink.
+
+## Removing
+
+Use Omarchy's confirmed removal command for both Git-managed and symlink installs:
+
+```sh
+omarchy plugin remove io.github.filipharald.oma-mise
+```
+
+Omarchy unloads an enabled plugin and rescans discovery. For a development symlink,
+it removes only `~/.config/omarchy/plugins/io.github.filipharald.oma-mise`, keeping
+the source checkout (for example `~/.local/share/oma-mise`). For a Git-managed
+installation it deletes that installed checkout, including any local edits; save
+those first. A plain directory without Git metadata is moved to an Omarchy backup
+under `~/.config/omarchy/plugins/.io.github.filipharald.oma-mise.bak.*` instead.
+
+What remains:
+
+- Any external development checkout and Omarchy-created directory backup.
+- Manual migration backups at `~/.config/omarchy/shell.json.backup-*` (or beneath
+  the explicit `--config-dir`). They contain the **entire shared shell config**,
+  not just this plugin's settings. Keep them private; inspect and delete only the
+  specific backups you no longer need. Older backups are not retroactively changed
+  by updating the plugin. Removal does not restore an old config.
+- Omarchy's own shared settings in `~/.config/omarchy/shell.json`; the remover does
+  not promise to erase every saved bar/settings entry. Manage those through
+  Omarchy rather than replacing the shared file from a backup.
+- Your pre-existing `dev.mise.mise-history.service`, its current running/stopped
+  state and enablement, mise configuration, dotfiles, history stores and Git
+  remotes. These belong to mise, not this plugin. Removing the monitor does not
+  pause synchronization, resume a paused watcher, or delete any mise data.
+- Python, mise and wl-clipboard packages. No sudoers, polkit rules, credentials,
+  keyring entries, hooks, or additional user services are installed by oma-mise.
+
+The plugin does not store status snapshots or dotfile contents on disk. Clipboard
+commands contain no private status data. Removal stops the plugin's clipboard
+owner; clearing any separate clipboard manager's retained history is your choice.
 
 ## Verification
 
@@ -136,11 +184,17 @@ python3 -m unittest discover -s tests -v
 QT_QPA_PLATFORM=offscreen QT_FORCE_STDERR_LOGGING=1 \
   /usr/lib/qt6/bin/qmltestrunner -input tests -o -,txt
 omarchy plugin validate .
-python3 status.py
+/usr/bin/python3 -I -S status.py
+/usr/bin/python3 -I -S watcher.py status
 ```
 
 Use the **Qt 6** test runner on Arch; `/usr/bin/qmltestrunner` can be Qt 5.
 `Presentation.js` is QML JavaScript (`.pragma library`), not a Node module.
+The Python suite also stages an isolated, offscreen Quickshell instance to test
+output overflow, failed launch, single-flight behavior and timeout escalation.
+That test is skipped when `/usr/bin/quickshell` is absent; it does not control the
+live shell or the mise watcher. Migration security tests use temporary fixtures,
+never your live configuration.
 
 For a live popup check: `omarchy-shell io.github.filipharald.oma-mise open`.
 For shell diagnostics: `quickshell log -p /usr/share/omarchy/shell -t 30`.

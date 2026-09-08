@@ -20,42 +20,41 @@ Singleton {
 
   function refresh() {
     if (refreshing || watcherAction.running) return
-    probe.running = true
-    watcherProbe.running = true
+    probe.start()
+    watcherProbe.start()
   }
 
   function toggleWatcher() {
-    if (watcherBusy || !watcher.can_control) return
+    if (watcherBusy || !watcher.can_control || (watcher.state !== "running" && watcher.state !== "stopped")) return
     controlError = ""
-    watcherAction.command = ["python3", watcherHelper, watcher.state === "running" ? "stop" : "start"]
-    watcherAction.running = true
+    watcherAction.command = ["/usr/bin/python3", "-I", "-S", watcherHelper, watcher.state === "running" ? "stop" : "start"]
+    watcherAction.start()
   }
 
-  Process {
+  BoundedProcess {
     id: probe
-    command: ["python3", root.helper]
-    stdout: StdioCollector {
-      onStreamFinished: root.status = Presentation.decode(text)
-    }
-    onExited: function(exitCode, exitStatus) {
-      if (exitCode !== 0 || exitStatus !== 0) root.status = Presentation.decode("")
-    }
+    command: ["/usr/bin/python3", "-I", "-S", root.helper]
+    stdoutLimit: 65536
+    stderrLimit: 4096
+    timeoutMs: 20000
+    onCompleted: (output, success) => root.status = Presentation.decode(success ? output : "")
   }
-  Process {
+  BoundedProcess {
     id: watcherProbe
-    command: ["python3", root.watcherHelper, "status"]
-    stdout: StdioCollector { onStreamFinished: root.watcher = Presentation.watcher(text) }
+    command: ["/usr/bin/python3", "-I", "-S", root.watcherHelper, "status"]
+    stdoutLimit: 4096
+    stderrLimit: 4096
+    timeoutMs: 20000
+    onCompleted: (output, success) => root.watcher = Presentation.watcher(success ? output : "")
   }
-  Process {
+  BoundedProcess {
     id: watcherAction
-    stdout: StdioCollector {
-      onStreamFinished: {
-        root.watcher = Presentation.watcher(text)
-        root.controlError = root.watcher.error
-      }
-    }
-    onExited: function(exitCode, exitStatus) {
-      if ((exitCode !== 0 || exitStatus !== 0) && root.controlError === "") root.controlError = "Could not change watcher state"
+    stdoutLimit: 4096
+    stderrLimit: 4096
+    timeoutMs: 55000
+    onCompleted: function(output, success) {
+      root.watcher = Presentation.watcher(success ? output : "")
+      root.controlError = success ? root.watcher.error : "Could not change watcher state"
       Qt.callLater(root.refresh)
     }
   }

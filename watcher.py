@@ -1,8 +1,14 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3 -I
 """JSON controller for the local user's mise history watcher only."""
 import json
 import subprocess
 import sys
+import importlib.util
+from pathlib import Path
+
+_spec = importlib.util.spec_from_file_location('oma_mise_runtime', Path(__file__).resolve().with_name('runtime.py'))
+runtime = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(runtime)
 
 UNIT = "dev.mise.mise-history.service"
 
@@ -13,9 +19,10 @@ def result(state="unknown", error=""):
 
 
 def run_systemctl(arguments):
-    return subprocess.run(
-        ["systemctl", "--user", *arguments],
-        stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=15,
+    return runtime.run(
+        ["/usr/bin/systemctl", "--user", *arguments],
+        cwd=str(Path.home()), env=runtime.environment(systemctl=True),
+        timeout=15, stdout_limit=16384, stderr_limit=16384,
     )
 
 
@@ -54,7 +61,7 @@ def main(argv=None):
                         data["error"] = "Unable to control watcher service."
                     elif not data["error"] and data["state"] != desired:
                         data["error"] = "Watcher did not reach the requested state."
-        except (OSError, subprocess.SubprocessError, UnicodeError):
+        except (OSError, RuntimeError, subprocess.SubprocessError, UnicodeError, KeyboardInterrupt):
             # Never expose command output, exception details, paths, or environment.
             data = result(error="Unable to communicate with watcher service.")
     print(json.dumps(data))
