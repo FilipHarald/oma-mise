@@ -44,6 +44,12 @@ service enablement/autostart or mise configuration. Unknown/missing/transitional
 service states disable the button; failures are displayed. Each systemctl command
 has a 15-second timeout. No root access is used.
 
+## Screenshots and publishing
+
+See [popup screenshots](screenshots/README.md) for staged green/yellow/red examples
+and [the publishing checklist](docs/PUBLISHING.md) for private testing, public
+distribution and release preparation. The repository is currently private.
+
 ## Requirements
 
 - Omarchy 4 with its Quickshell plugin system

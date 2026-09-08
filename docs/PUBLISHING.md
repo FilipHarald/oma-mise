@@ -1,0 +1,78 @@
+# Publishing oma-mise
+
+The GitHub repository is **private** as verified on 8 September 2026. This document
+is a checklist, not authorization to change visibility or publish social posts.
+
+## Before making it public
+
+- [ ] Choose and add a license for the plugin code. There is currently no LICENSE
+  file; making source public does not automatically grant reuse rights.
+- [ ] Confirm redistribution/attribution requirements for the bundled mise logo.
+  Its source is documented in `assets/README.md`; code licensing and logo rights
+  are separate questions.
+- [ ] Review the complete Git history, README and screenshots for private content.
+  The README currently includes a local installation path. Remove or generalize
+  machine-specific notes if undesired. Making the repo public exposes its history,
+  not just the latest tree.
+- [ ] Decide whether to retain the stable `local.mise-status` plugin ID. It works
+  today; a namespaced ID is a possible pre-release cleanup, not a requirement.
+  Changing it requires updating QML/manifest/IPC/docs and migrating existing bar
+  configuration. Do not rename it casually after people install the plugin.
+- [ ] Run the README verification commands and test on a clean Omarchy 4 machine
+  with the documented mise history setup. A fresh authenticated clone of the
+  private repo passed manifest validation during screenshot preparation; that is
+  not a full fresh-desktop installation test.
+- [ ] Add the Git installation command below and release notes to the public README.
+- [ ] Only when explicitly approved: change GitHub visibility to public, then verify
+  unauthenticated cloning works. No visibility change was performed here.
+- [ ] Recommended: tag the reviewed commit `v0.1.0` (matching the manifest) and
+  create a GitHub release with requirements, known limitations and screenshots.
+  Neither a release nor a tag is required by the Git-based installer.
+
+## Distribution
+
+The installed Omarchy CLI supports direct Git distribution. It clones a repo,
+validates `manifest.json`, checks for duplicate plugin IDs, discovers it and can
+enable it. There is no registry submission required for this installation path.
+This does not imply acceptance into any curated community listing.
+
+After the repository is public, new users can run:
+
+```sh
+omarchy plugin add https://github.com/FilipHarald/oma-mise.git --enable
+```
+
+While private, collaborators with GitHub access and configured SSH can instead use:
+
+```sh
+omarchy plugin add git@github.com:FilipHarald/oma-mise.git --enable
+```
+
+These are **new-install** commands: this machine already has the plugin installed
+as a development symlink. Running add here will reject the existing ID. Keep using
+that symlink for development rather than replacing it just to test installation.
+For installations managed by the Git installer, updates are:
+
+```sh
+omarchy plugin update local.mise-status
+```
+
+Plugins run as unsandboxed code in the desktop shell. Users should review the code
+before enabling. This plugin's status checks read local mise state; explicit
+watcher controls start/stop the existing user service and can resume sync.
+
+## Social images
+
+See [`../screenshots/README.md`](../screenshots/README.md). Download the PNGs locally
+and attach them to X posts; private GitHub/raw links are not public image hosting.
+The images are staged demo states, not reports of real sync incidents.
+No X post was created. No public repository, release or registry submission was made.
+
+## Sources checked
+
+- Installed `omarchy plugin --help` and
+  `/usr/share/omarchy/bin/omarchy-plugin-add`: Git install/enable, schema validation,
+  duplicate-ID checks and trust warning.
+- Installed `/usr/share/omarchy/default/agents/skills/omarchy/plugins.md`: plugin
+  locations, discovery and reload behavior.
+- `gh repo view FilipHarald/oma-mise --json visibility,url`: private repository.
