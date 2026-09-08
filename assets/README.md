@@ -6,8 +6,9 @@ Verified upstream at commit `59ec32fc0be163baf952109c18c986e48c1c901f`:
 - [Bundled copy of the upstream notice](LICENSE-mise)
 
 The logo asset is distributed under MIT. Preserve the upstream copyright and
-permission notice when copying or redistributing these variants.
+permission notice when copying or redistributing the bundled asset.
 
-These four variants preserve the original SVG geometry; only the white fill
-is replaced with the plugin’s green, yellow, red, and blue status colors.
+The bundled SVG preserves the original geometry and is used as a mask. The bar
+renders it in the current Omarchy foreground color normally, switching to yellow
+or red only when attention is needed.
 The logo belongs to the mise project; no affiliation or endorsement is implied.

@@ -67,19 +67,8 @@ More capture details are in [`screenshots/README.md`](screenshots/README.md).
 
 ## Requirements
 
-- Omarchy 4 with its Quickshell plugin system
-- Python 3 standard library
-- `wl-copy` from wl-clipboard
-- Mise with `bootstrap dotfiles status --json` (tested with 2026.9.3)
-- A configured mise dotfiles/history setup
-
-The helper accepts mise only at `~/.local/bin/mise` or `/usr/bin/mise`. It does
-not use an inherited PATH or executable override. Runtime commands have bounded
-output, deadlines, descendant cleanup, isolated environments, and strict JSON/UI
-validation. The plugin makes no network requests and uses no root privileges.
-
-Clipboard ownership lasts while the plugin is loaded or until another copy
-replaces it. A separate clipboard manager may retain its own history.
+- [mise 2026.9.3 or newer](https://mise.jdx.dev/), with
+  [dotfiles history configured](https://jdx.dev/posts/2026-09-07-dotfiles-that-save-themselves/)
 
 ## Removing
 

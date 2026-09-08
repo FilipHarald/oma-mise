@@ -7,21 +7,23 @@ TestCase {
   when: windowShown
   width: 40
   height: 40
-  StatusIcon { id: icon; width: 24; height: 24 }
+  StatusIcon { id: icon; width: 24; height: 24; foreground: "#d8d8d8" }
   function test_logo_data() {
     return [
-      {tag: "green", level: "green", asset: "green"},
-      {tag: "yellow", level: "yellow", asset: "yellow"},
-      {tag: "red", level: "red", asset: "red"},
-      {tag: "blue", level: "blue", asset: "blue"},
-      {tag: "unknown", level: "unknown", asset: "yellow"}
+      {tag: "green", level: "green", color: "#d8d8d8"},
+      {tag: "yellow", level: "yellow", color: "#e5bf69"},
+      {tag: "red", level: "red", color: "#ee7373"},
+      {tag: "blue", level: "blue", color: "#d8d8d8"},
+      {tag: "unknown", level: "unknown", color: "#d8d8d8"}
     ]
   }
   function test_logo(data) {
     icon.level = data.level
-    tryCompare(icon, "status", Image.Ready)
-    verify(icon.source.toString().endsWith("/assets/mise-" + data.asset + ".svg"))
-    compare(icon.fillMode, Image.PreserveAspectFit)
-    verify(icon.sourceSize.width >= 24)
+    var image = findChild(icon, "logoSource")
+    tryCompare(image, "status", Image.Ready)
+    verify(image.source.toString().endsWith("/assets/mise-green.svg"))
+    compare(icon.displayColor.toString(), data.color)
+    compare(image.fillMode, Image.PreserveAspectFit)
+    verify(image.sourceSize.width >= 24)
   }
 }

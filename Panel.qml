@@ -33,6 +33,7 @@ Panel {
           width: Style.bar.iconFont
           height: width
           level: StatusStore.status.level
+          foreground: root.bar ? root.bar.foreground : Color.foreground
         }
       }
     }
