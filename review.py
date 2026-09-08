@@ -9,8 +9,8 @@ import sys
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     try:
-        if len(argv) != 1 or argv[0] not in ('conflicts', 'changes'):
-            print('Usage: review.py conflicts|changes', file=sys.stderr)
+        if len(argv) != 1 or argv[0] not in ('status', 'conflicts', 'changes'):
+            print('Usage: review.py status|conflicts|changes', file=sys.stderr)
             return 2
         home = Path.home()
         local = home / '.local/bin/mise'
@@ -18,7 +18,8 @@ def main(argv=None):
         commands = [['status']]
         if argv[0] == 'changes':
             commands.append(['history', 'diff'])
-        commands.append(['pull', '--dry-run'])
+        if argv[0] != 'status':
+            commands.append(['pull', '--dry-run'])
         failed = False
         for args in commands:
             label = ' '.join(args)

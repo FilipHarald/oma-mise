@@ -7,8 +7,8 @@ import "ui"
 
 Panel {
   id: root
-  moduleName: "local.mise-status"
-  ipcTarget: "local.mise-status"
+  moduleName: "io.github.filipharald.oma-mise"
+  ipcTarget: "io.github.filipharald.oma-mise"
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
   readonly property int barSlot: Style.bar.iconFont + Style.space(10)
   readonly property real openPanelIndicatorWidth: Style.bar.iconFont
@@ -79,7 +79,7 @@ Panel {
           onRefreshRequested: StatusStore.refresh()
           onWatcherToggleRequested: StatusStore.toggleWatcher()
           onReviewRequested: function(kind) {
-            if (kind !== "conflicts" && kind !== "changes") return
+            if (kind !== "status" && kind !== "conflicts" && kind !== "changes") return
             var helper = decodeURIComponent(Qt.resolvedUrl("review.py").toString().replace(/^file:\/\//, ""))
             Quickshell.execDetached(["omarchy-launch-terminal", "--app-id=org.omarchy.mise.review", "--title=Mise review", "python3", helper, kind])
             root.close()

@@ -17,6 +17,12 @@ Column {
   property int bodySize: 14
   property int captionSize: 12
   property real unit: 1
+  readonly property string reviewKind: {
+    var reasons = (root.status.details || []).join("\n")
+    if (reasons.indexOf("Pending dotfiles changes need review") !== -1) return "changes"
+    if (reasons.indexOf("Sync conflicts need review") !== -1) return "conflicts"
+    return root.status.level === "yellow" || root.status.level === "red" ? "status" : ""
+  }
   readonly property var counts: {
     var lines = root.status.details || []
     for (var i = 0; i < lines.length; i++) {
@@ -44,6 +50,19 @@ Column {
     spacing: 5 * root.unit
     Text {
       objectName: "statusHeading"
+      MouseArea {
+        id: headingMouse
+        anchors.fill: parent
+        enabled: root.reviewKind !== ""
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.reviewRequested(root.reviewKind)
+      }
+      ToolTip.visible: headingMouse.containsMouse
+      ToolTip.delay: 500
+      ToolTip.text: "Review in default terminal (no changes applied)"
+      Accessible.role: root.reviewKind !== "" ? Accessible.Button : Accessible.StaticText
+      Accessible.onPressAction: if (root.reviewKind !== "") root.reviewRequested(root.reviewKind)
       width: parent.width
       text: root.status.summary
       textFormat: Text.PlainText
@@ -55,8 +74,7 @@ Column {
     }
     Text {
       objectName: "statusReason"
-      readonly property string reviewKind: text.indexOf("Pending dotfiles changes need review") !== -1 ? "changes"
-        : text.indexOf("Sync conflicts need review") !== -1 ? "conflicts" : ""
+      readonly property string reviewKind: root.reviewKind
       width: parent.width
       text: (root.status.details || []).filter(function(line) {
         return line.indexOf("Watcher: ") !== 0
@@ -73,6 +91,7 @@ Column {
         onClicked: root.reviewRequested(parent.reviewKind)
       }
       ToolTip.visible: reviewMouse.containsMouse
+      ToolTip.delay: 500
       ToolTip.text: "Review in default terminal (no changes applied)"
       Accessible.role: reviewKind !== "" ? Accessible.Button : Accessible.StaticText
       Accessible.name: text

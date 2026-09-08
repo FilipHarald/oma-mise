@@ -1,8 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "local.mise-status",
+  "id": "io.github.filipharald.oma-mise",
   "name": "Mise dotfiles",
   "version": "0.1.0",
+  "license": "MIT",
   "description": "Dotfile sync health and watcher controls for mise",
   "kinds": [
     "bar-widget"

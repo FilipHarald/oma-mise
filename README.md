@@ -22,8 +22,9 @@ The popup has a muted title, a status-colored summary, watcher start/stop contro
 file/checkpoint icons on their own centered row, and publish/fetch/apply rows
 with right-aligned timestamps.
 Error/warning reasons appear immediately beneath the summary, above the counts.
-Click conflict/pending-change reasons to review them in Omarchy's configured
-default terminal. Conflict review runs `mise bootstrap dotfiles status` and
+Click an attention/error heading or its reasons to review them in Omarchy's
+configured default terminal. General warnings (including watcher health) run
+`mise bootstrap dotfiles status` only. Conflict review runs that command and
 `mise bootstrap dotfiles pull --dry-run`; pending-change review also runs
 `mise bootstrap dotfiles history diff`. These commands run from your home
 directory. If both conflicts and pending changes exist, the combined review includes
@@ -101,30 +102,31 @@ The helper prefers `~/.local/bin/mise`, falling back to `mise` on the shell's PA
 
 ## Local installation
 
-Keep this folder somewhere permanent, then link it into the user plugin directory:
+Keep the checkout in a permanent directory such as `~/.local/share/oma-mise`, then
+link it into the user plugin directory (substitute your checkout path if different):
 
 ```sh
 mkdir -p ~/.config/omarchy/plugins
-ln -s /absolute/path/to/oma-mise ~/.config/omarchy/plugins/local.mise-status
-omarchy plugin validate ~/.config/omarchy/plugins/local.mise-status
+ln -s "$HOME/.local/share/oma-mise" ~/.config/omarchy/plugins/io.github.filipharald.oma-mise
+omarchy plugin validate ~/.config/omarchy/plugins/io.github.filipharald.oma-mise
 omarchy-shell shell rescanPlugins
 ```
 
-Discovery is asynchronous. Once `omarchy plugin list` shows `local.mise-status`:
+Discovery is asynchronous. Once `omarchy plugin list` shows `io.github.filipharald.oma-mise`:
 
 ```sh
-omarchy plugin enable local.mise-status
-omarchy bar move local.mise-status --section right --after omarchy.tray
+omarchy plugin enable io.github.filipharald.oma-mise
+omarchy bar move io.github.filipharald.oma-mise --section right --after omarchy.tray
 ```
 
 No root access or additional service is needed. Local plugin changes normally
 hot-reload; if QML stays cached after rescanning, use `omarchy restart shell`.
-The initial installation on this machine links to
-`/home/filip/c/oma-mise` and is enabled next to the system tray.
-The source folder is named `oma-mise`; the stable plugin ID remains
-`local.mise-status` so existing bar configuration and IPC commands keep working.
+The repository remains `oma-mise`; the plugin ID is `io.github.filipharald.oma-mise`,
+following the same reverse-domain convention as Omacoach.
+Existing `local.mise-status` installs must follow [the migration guide](docs/MIGRATION.md)
+to preserve their bar placement and settings. Do not install a duplicate alongside it.
 
-To hide it: `omarchy plugin disable local.mise-status`.
+To hide it: `omarchy plugin disable io.github.filipharald.oma-mise`.
 To uninstall, disable it first, then remove only the plugin symlink.
 
 ## Verification
@@ -140,7 +142,7 @@ python3 status.py
 Use the **Qt 6** test runner on Arch; `/usr/bin/qmltestrunner` can be Qt 5.
 `Presentation.js` is QML JavaScript (`.pragma library`), not a Node module.
 
-For a live popup check: `omarchy-shell local.mise-status open`.
+For a live popup check: `omarchy-shell io.github.filipharald.oma-mise open`.
 For shell diagnostics: `quickshell log -p /usr/share/omarchy/shell -t 30`.
 
 Source is deliberately separate from `dotfiles-private`: editing this plugin

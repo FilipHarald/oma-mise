@@ -12,14 +12,11 @@ is a checklist, not authorization to change visibility or publish social posts.
   [asset attribution](../assets/README.md) links the pinned source and license.
   Keep that notice when redistributing the recolored SVGs. This does not imply
   trademark permission or upstream endorsement.
-- [ ] Review the complete Git history, README and screenshots for private content.
-  The README currently includes a local installation path. Remove or generalize
-  machine-specific notes if undesired. Making the repo public exposes its history,
-  not just the latest tree.
-- [ ] Decide whether to retain the stable `local.mise-status` plugin ID. It works
-  today; a namespaced ID is a possible pre-release cleanup, not a requirement.
-  Changing it requires updating QML/manifest/IPC/docs and migrating existing bar
-  configuration. Do not rename it casually after people install the plugin.
+- History review is waived by the repository owner; no history audit was performed.
+- [x] Generalize installation paths; examples use `~/.local/share/oma-mise`.
+- [x] Use `io.github.filipharald.oma-mise`, following Omacoach's reverse-domain ID
+  convention while retaining the `oma-mise` repository name. See
+  [migration instructions](MIGRATION.md) for existing `local.mise-status` installs.
 - [ ] Run the README verification commands and test on a clean Omarchy 4 machine
   with the documented mise history setup. A fresh authenticated clone of the
   private repo passed manifest validation during screenshot preparation; that is
@@ -50,13 +47,13 @@ While private, collaborators with GitHub access and configured SSH can instead u
 omarchy plugin add git@github.com:FilipHarald/oma-mise.git --enable
 ```
 
-These are **new-install** commands: this machine already has the plugin installed
-as a development symlink. Running add here will reject the existing ID. Keep using
-that symlink for development rather than replacing it just to test installation.
+These are **new-install** commands. If the plugin is already installed as a
+development symlink, keep that checkout and symlink instead of installing a duplicate.
+Migrate old IDs using [the migration guide](MIGRATION.md) first.
 For installations managed by the Git installer, updates are:
 
 ```sh
-omarchy plugin update local.mise-status
+omarchy plugin update io.github.filipharald.oma-mise
 ```
 
 Plugins run as unsandboxed code in the desktop shell. Users should review the code

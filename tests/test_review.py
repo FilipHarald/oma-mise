@@ -42,6 +42,10 @@ class ReviewTests(unittest.TestCase):
                                                  self.command('pull', '--dry-run')])
         self.prompt.assert_called_once_with('Press Enter to close…')
 
+    def test_general_status_review_does_not_pull_or_diff(self):
+        self.assertEqual(review.main(['status']), 0)
+        self.assertEqual(self.run_command.call_args_list, [self.command('status')])
+
     def test_changes_adds_history_diff_before_dry_run(self):
         self.assertEqual(review.main(['changes']), 0)
         self.assertEqual(self.run_command.call_args_list, [self.command('status'),

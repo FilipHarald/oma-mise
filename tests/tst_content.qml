@@ -32,6 +32,26 @@ TestCase {
     waitForRendering(content)
     reviewSpy.clear()
     mouseClick(findChild(content, "statusReason"))
+    compare(reviewSpy.count, 1)
+    compare(reviewSpy.signalArguments[0][0], "status")
+    content.status = original
+  }
+  function test_attention_heading_and_health_reason_click() {
+    var original = content.status
+    content.status = {summary: "Dotfiles need attention", level: "yellow", details: ["Watcher health needs review"]}
+    waitForRendering(content)
+    for (var name of ["statusHeading", "statusReason"]) {
+      var item = findChild(content, name)
+      waitForRendering(item)
+      reviewSpy.clear()
+      mouseClick(item, item.width / 2, item.height / 2)
+      compare(reviewSpy.count, 1, name)
+      compare(reviewSpy.signalArguments[0][0], "status")
+    }
+    content.status = {summary: "Dotfiles synced", level: "green", details: []}
+    waitForRendering(content)
+    reviewSpy.clear()
+    mouseClick(findChild(content, "statusHeading"))
     compare(reviewSpy.count, 0)
     content.status = original
   }
