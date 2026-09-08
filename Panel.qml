@@ -78,11 +78,8 @@ Panel {
           unit: Style.space(1)
           onRefreshRequested: StatusStore.refresh()
           onWatcherToggleRequested: StatusStore.toggleWatcher()
-          onReviewRequested: function(kind) {
-            if (kind !== "status" && kind !== "conflicts" && kind !== "changes") return
-            var helper = decodeURIComponent(Qt.resolvedUrl("review.py").toString().replace(/^file:\/\//, ""))
-            Quickshell.execDetached(["omarchy-launch-terminal", "--app-id=org.omarchy.mise.review", "--title=Mise review", "python3", helper, kind])
-            root.close()
+          onCopyRequested: function(command) {
+            Quickshell.execDetached(["wl-copy", "--", command])
           }
         }
       }

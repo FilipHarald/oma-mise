@@ -16,43 +16,28 @@ TestCase {
   }
   SignalSpy { id: refreshSpy; target: content; signalName: "refreshRequested" }
   SignalSpy { id: watcherSpy; target: content; signalName: "watcherToggleRequested" }
-  SignalSpy { id: reviewSpy; target: content; signalName: "reviewRequested" }
-  function test_review_clicks() {
+  SignalSpy { id: copySpy; target: content; signalName: "copyRequested" }
+  function test_copy_commands_not_text_clicks() {
     var original = content.status
-    for (var sample of [["Sync conflicts need review", "conflicts"], ["Pending dotfiles changes need review", "changes"], ["Sync conflicts need review\nPending dotfiles changes need review", "changes"]]) {
-      content.status = {summary: "Needs review", level: "yellow", details: [sample[0]]}
-      var reason = findChild(content, "statusReason")
-      waitForRendering(reason)
-      reviewSpy.clear()
-      mouseClick(reason)
-      compare(reviewSpy.count, 1)
-      compare(reviewSpy.signalArguments[0][0], sample[1])
-    }
-    content.status = {summary: "Unavailable", level: "yellow", details: ["Watcher status is unconfirmed"]}
-    waitForRendering(content)
-    reviewSpy.clear()
-    mouseClick(findChild(content, "statusReason"))
-    compare(reviewSpy.count, 1)
-    compare(reviewSpy.signalArguments[0][0], "status")
-    content.status = original
-  }
-  function test_attention_heading_and_health_reason_click() {
-    var original = content.status
-    content.status = {summary: "Dotfiles need attention", level: "yellow", details: ["Watcher health needs review"]}
-    waitForRendering(content)
-    for (var name of ["statusHeading", "statusReason"]) {
-      var item = findChild(content, name)
-      waitForRendering(item)
-      reviewSpy.clear()
-      mouseClick(item, item.width / 2, item.height / 2)
-      compare(reviewSpy.count, 1, name)
-      compare(reviewSpy.signalArguments[0][0], "status")
+    var base = 'mise -C "$HOME" bootstrap dotfiles '
+    for (var sample of [["Watcher health needs review", base + "status"],
+        ["Sync conflicts need review", base + "status; " + base + "pull --dry-run"],
+        ["Pending dotfiles changes need review", base + "status; " + base + "history diff; " + base + "pull --dry-run"],
+        ["Sync conflicts need review\nPending dotfiles changes need review", base + "status; " + base + "history diff; " + base + "pull --dry-run"]]) {
+      content.status = {summary: "Dotfiles need attention", level: "yellow", details: [sample[0]]}
+      var button = findChild(content, "copyCommandButton")
+      verify(button !== null)
+      waitForRendering(button)
+      copySpy.clear()
+      mouseClick(findChild(content, "statusHeading"))
+      mouseClick(findChild(content, "statusReason"))
+      compare(copySpy.count, 0)
+      mouseClick(button)
+      compare(copySpy.count, 1)
+      compare(copySpy.signalArguments[0][0], sample[1])
     }
     content.status = {summary: "Dotfiles synced", level: "green", details: []}
-    waitForRendering(content)
-    reviewSpy.clear()
-    mouseClick(findChild(content, "statusHeading"))
-    compare(reviewSpy.count, 0)
+    compare(findChild(content, "copyCommandButton").visible, false)
     content.status = original
   }
   function test_date_hover() {

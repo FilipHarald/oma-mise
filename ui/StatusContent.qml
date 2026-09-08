@@ -33,7 +33,15 @@ Column {
   }
   signal refreshRequested()
   signal watcherToggleRequested()
-  signal reviewRequested(string kind)
+  readonly property string reviewCommand: {
+    var base = 'mise -C "$HOME" bootstrap dotfiles '
+    if (reviewKind === "") return ""
+    var commands = [base + "status"]
+    if (reviewKind === "changes") commands.push(base + "history diff")
+    if (reviewKind !== "status") commands.push(base + "pull --dry-run")
+    return commands.join("; ")
+  }
+  signal copyRequested(string command)
   spacing: 12 * unit
 
   Text {
@@ -48,33 +56,48 @@ Column {
   Column {
     width: parent.width
     spacing: 5 * root.unit
-    Text {
-      objectName: "statusHeading"
-      MouseArea {
-        id: headingMouse
-        anchors.fill: parent
-        enabled: root.reviewKind !== ""
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.reviewRequested(root.reviewKind)
-      }
-      ToolTip.visible: headingMouse.containsMouse
-      ToolTip.delay: 500
-      ToolTip.text: "Review in default terminal (no changes applied)"
-      Accessible.role: root.reviewKind !== "" ? Accessible.Button : Accessible.StaticText
-      Accessible.onPressAction: if (root.reviewKind !== "") root.reviewRequested(root.reviewKind)
+    Row {
       width: parent.width
-      text: root.status.summary
-      textFormat: Text.PlainText
-      elide: Text.ElideRight
-      color: Presentation.colorFor(root.status.level)
-      font.family: root.fontFamily
-      font.pixelSize: root.bodySize
-      font.bold: true
+      spacing: 6 * root.unit
+      Text {
+        objectName: "statusHeading"
+        anchors.verticalCenter: parent.verticalCenter
+        width: Math.min(implicitWidth, parent.width - (copyButton.visible ? copyButton.width + parent.spacing : 0))
+        text: root.status.summary
+        textFormat: Text.PlainText
+        elide: Text.ElideRight
+        color: Presentation.colorFor(root.status.level)
+        font.family: root.fontFamily
+        font.pixelSize: root.bodySize
+        font.bold: true
+      }
+      ToolButton {
+        id: copyButton
+        objectName: "copyCommandButton"
+        width: 24 * root.unit
+        height: 24 * root.unit
+        visible: root.reviewCommand !== ""
+        focusPolicy: Qt.NoFocus
+        hoverEnabled: true
+        Accessible.name: "Copy review command"
+        ToolTip.visible: hovered
+        ToolTip.delay: 500
+        ToolTip.text: "Copy review command"
+        contentItem: Text {
+          text: "\uf0c5"
+          horizontalAlignment: Text.AlignHCenter
+          verticalAlignment: Text.AlignVCenter
+          color: root.foreground
+          opacity: 0.55
+          font.family: root.fontFamily
+          font.pixelSize: root.captionSize
+        }
+        onClicked: root.copyRequested(root.reviewCommand)
+      }
     }
     Text {
       objectName: "statusReason"
-      readonly property string reviewKind: root.reviewKind
+
       width: parent.width
       text: (root.status.details || []).filter(function(line) {
         return line.indexOf("Watcher: ") !== 0
@@ -82,20 +105,7 @@ Column {
           && !/^Last (publish|fetch|apply): /.test(line)
       }).join("\n")
       visible: text !== ""
-      MouseArea {
-        id: reviewMouse
-        anchors.fill: parent
-        enabled: parent.reviewKind !== ""
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.reviewRequested(parent.reviewKind)
-      }
-      ToolTip.visible: reviewMouse.containsMouse
-      ToolTip.delay: 500
-      ToolTip.text: "Review in default terminal (no changes applied)"
-      Accessible.role: reviewKind !== "" ? Accessible.Button : Accessible.StaticText
-      Accessible.name: text
-      Accessible.onPressAction: if (reviewKind !== "") root.reviewRequested(reviewKind)
+
       textFormat: Text.PlainText
       wrapMode: Text.Wrap
       color: root.foreground

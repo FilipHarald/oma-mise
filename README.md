@@ -22,16 +22,15 @@ The popup has a muted title, a status-colored summary, watcher start/stop contro
 file/checkpoint icons on their own centered row, and publish/fetch/apply rows
 with right-aligned timestamps.
 Error/warning reasons appear immediately beneath the summary, above the counts.
-Click an attention/error heading or its reasons to review them in Omarchy's
-configured default terminal. General warnings (including watcher health) run
-`mise bootstrap dotfiles status` only. Conflict review runs that command and
-`mise bootstrap dotfiles pull --dry-run`; pending-change review also runs
-`mise bootstrap dotfiles history diff`. These commands run from your home
-directory. If both conflicts and pending changes exist, the combined review includes
-the local diff and incoming-change plan. The terminal stays open until Enter is pressed. No changes are applied,
-no conflict resolution is selected, and no editor is launched automatically.
-Review output can contain private paths and file contents; it stays in your local
-terminal rather than the popup or screenshots. Trusted mise templates may execute.
+Use the copy icon next to an attention/error heading to copy a read-only review
+command, then paste it into your terminal. The heading and reasons are not clickable;
+the plugin never launches a terminal/editor or runs the copied command.
+General warnings copy `mise -C "$HOME" bootstrap dotfiles status`.
+Conflicts also include `pull --dry-run`; pending changes add `history diff`.
+Mixed conflict/pending states include both reviews. Every command is explicitly
+home-scoped and no command applies changes or chooses a conflict resolution.
+Running the command yourself can show private paths or file contents in your
+terminal. Trusted mise templates may execute during status checks.
 Below a divider, a live `Next check in 30s` countdown leads to the next status poll;
 longer durations use hours/minutes/seconds. The next poll is scheduled 30 seconds
 after a check completes. Opening the popup or clicking its refresh icon checks
@@ -95,6 +94,7 @@ logo retains its upstream ownership; see [asset attribution](assets/README.md).
 
 - Omarchy 4 with its Quickshell plugin system
 - Python 3 (standard library only)
+- `wl-copy` (wl-clipboard) for copying review commands
 - Mise with `bootstrap dotfiles status --json` (tested with 2026.9.3)
 - A configured mise dotfiles/history setup
 
