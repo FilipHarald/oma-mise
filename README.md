@@ -1,13 +1,6 @@
-<div align="center">
-
 # oma-mise
 
-**Mise dotfiles, at a glance.**
-
-A native Omarchy bar widget for sync activity, tracked-file counts, watcher
-controls, and safe review commands.
-
-</div>
+A native Omarchy bar widget for sync activity, tracked-file counts for [`mise dotfiles`](https://jdx.dev/posts/2026-09-07-dotfiles-that-save-themselves/)
 
 ![oma-mise showing healthy dotfiles](preview.png)
 
