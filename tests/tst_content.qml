@@ -16,6 +16,25 @@ TestCase {
   }
   SignalSpy { id: refreshSpy; target: content; signalName: "refreshRequested" }
   SignalSpy { id: watcherSpy; target: content; signalName: "watcherToggleRequested" }
+  SignalSpy { id: reviewSpy; target: content; signalName: "reviewRequested" }
+  function test_review_clicks() {
+    var original = content.status
+    for (var sample of [["Sync conflicts need review", "conflicts"], ["Pending dotfiles changes need review", "changes"], ["Sync conflicts need review\nPending dotfiles changes need review", "changes"]]) {
+      content.status = {summary: "Needs review", level: "yellow", details: [sample[0]]}
+      var reason = findChild(content, "statusReason")
+      waitForRendering(reason)
+      reviewSpy.clear()
+      mouseClick(reason)
+      compare(reviewSpy.count, 1)
+      compare(reviewSpy.signalArguments[0][0], sample[1])
+    }
+    content.status = {summary: "Unavailable", level: "yellow", details: ["Watcher status is unconfirmed"]}
+    waitForRendering(content)
+    reviewSpy.clear()
+    mouseClick(findChild(content, "statusReason"))
+    compare(reviewSpy.count, 0)
+    content.status = original
+  }
   function test_date_hover() {
     var times = {}
     for (var field of ["publish", "fetch", "apply"]) times[field] = new Date(Date.now() - 5000).toISOString()

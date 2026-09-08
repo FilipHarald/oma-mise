@@ -22,6 +22,15 @@ The popup has a muted title, a status-colored summary, watcher start/stop contro
 file/checkpoint icons on their own centered row, and publish/fetch/apply rows
 with right-aligned timestamps.
 Error/warning reasons appear immediately beneath the summary, above the counts.
+Click conflict/pending-change reasons to review them in Omarchy's configured
+default terminal. Conflict review runs `mise bootstrap dotfiles status` and
+`mise bootstrap dotfiles pull --dry-run`; pending-change review also runs
+`mise bootstrap dotfiles history diff`. These commands run from your home
+directory. If both conflicts and pending changes exist, the combined review includes
+the local diff and incoming-change plan. The terminal stays open until Enter is pressed. No changes are applied,
+no conflict resolution is selected, and no editor is launched automatically.
+Review output can contain private paths and file contents; it stays in your local
+terminal rather than the popup or screenshots. Trusted mise templates may execute.
 Below a divider, a live `Next check in 30s` countdown leads to the next status poll;
 longer durations use hours/minutes/seconds. The next poll is scheduled 30 seconds
 after a check completes. Opening the popup or clicking its refresh icon checks
@@ -71,8 +80,6 @@ Actual native popup screenshots with staged demo data—not real sync incidents.
 
 Pausing stops the watcher service and shows a blue state unless a real sync error
 is reported. This screenshot is a demo, not a change to the live watcher.
-
-Blue bar icon: ![Paused mise bar icon](screenshots/paused-tray-icon.png)
 
 See [popup screenshots](screenshots/README.md) for staged green/yellow/red examples
 and [the publishing checklist](docs/PUBLISHING.md) for private testing, public

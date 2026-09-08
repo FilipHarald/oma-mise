@@ -27,6 +27,7 @@ Column {
   }
   signal refreshRequested()
   signal watcherToggleRequested()
+  signal reviewRequested(string kind)
   spacing: 12 * unit
 
   Text {
@@ -54,6 +55,8 @@ Column {
     }
     Text {
       objectName: "statusReason"
+      readonly property string reviewKind: text.indexOf("Pending dotfiles changes need review") !== -1 ? "changes"
+        : text.indexOf("Sync conflicts need review") !== -1 ? "conflicts" : ""
       width: parent.width
       text: (root.status.details || []).filter(function(line) {
         return line.indexOf("Watcher: ") !== 0
@@ -61,6 +64,19 @@ Column {
           && !/^Last (publish|fetch|apply): /.test(line)
       }).join("\n")
       visible: text !== ""
+      MouseArea {
+        id: reviewMouse
+        anchors.fill: parent
+        enabled: parent.reviewKind !== ""
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.reviewRequested(parent.reviewKind)
+      }
+      ToolTip.visible: reviewMouse.containsMouse
+      ToolTip.text: "Review in default terminal (no changes applied)"
+      Accessible.role: reviewKind !== "" ? Accessible.Button : Accessible.StaticText
+      Accessible.name: text
+      Accessible.onPressAction: if (reviewKind !== "") root.reviewRequested(reviewKind)
       textFormat: Text.PlainText
       wrapMode: Text.Wrap
       color: root.foreground
