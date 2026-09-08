@@ -109,9 +109,7 @@ def evaluate(payload, now=None):
         errors.append('Sync conflicts need review')
     state = history.get('watcher')
     details.append('Watcher: ' + (state if state in ('running', 'stopped') else 'unknown'))
-    if state == 'stopped':
-        errors.append('Dotfiles watcher is stopped')
-    elif state != 'running':
+    if state not in ('running', 'stopped'):
         warnings.append('Watcher status is unconfirmed')
     if history.get('enabled') is not True:
         warnings.append('Dotfiles history is not confirmed enabled')
@@ -155,9 +153,9 @@ def evaluate(payload, now=None):
         details.append('; '.join(dict.fromkeys(warnings)))
     if errors or warnings:
         details.append('Review mise dotfiles status locally; this monitor makes no changes')
-    level = 'red' if errors else 'yellow' if warnings else 'green'
+    level = 'red' if errors else 'blue' if state == 'stopped' else 'yellow' if warnings else 'green'
     summary = {'red': 'Dotfiles error', 'yellow': 'Dotfiles need attention',
-               'green': 'Dotfiles synced'}[level]
+               'green': 'Dotfiles synced', 'blue': 'Dotfiles watcher stopped'}[level]
     return {'level': level, 'summary': summary, 'details': details,
             'checked_at': now.isoformat(), 'checked_label': format_timestamp(now, now),
             'timestamps': timestamps}

@@ -1,6 +1,6 @@
 # oma-mise — Mise status for Omarchy
 
-A small mise logo tinted red/yellow/green in the Omarchy 4 bar. Click it for mise's
+A small mise logo tinted red/yellow/green/blue in the Omarchy 4 bar. Click it for mise's
 local dotfile synchronization status. Inspired by
 [jankeesvw/omarchy-time-machine](https://github.com/jankeesvw/omarchy-time-machine),
 using Omarchy's native panel components rather than a separate tray daemon.
@@ -12,12 +12,16 @@ using Omarchy's native panel components rather than a separate tray daemon.
 - **Yellow:** changes are pending, synchronization is degraded or unconfirmed,
   setup is incomplete, or status cannot be read. A fetch older than 15 minutes
   is unconfirmed, not evidence that the watcher has stopped.
-- **Red:** conflicts, reported sync failures, unavailable history, or a stopped
-  watcher require attention. Failures take precedence over pending changes.
+- **Red:** conflicts, reported sync failures, or unavailable history require
+  attention. Actual errors take precedence even when the watcher is stopped.
+- **Blue:** the watcher is stopped/paused, with no reported sync error. The summary
+  reads `Dotfiles watcher stopped`; the watcher footer and resume icon are muted
+  blue. Any pending-change or stale-fetch reasons remain visible below the summary.
 
 The popup has a muted title, a status-colored summary, watcher start/stop controls,
 file/checkpoint icons on their own centered row, and publish/fetch/apply rows
 with right-aligned timestamps.
+Error/warning reasons appear immediately beneath the summary, above the counts.
 Below a divider, a live `Next check in 30s` countdown leads to the next status poll;
 longer durations use hours/minutes/seconds. The next poll is scheduled 30 seconds
 after a check completes. Opening the popup or clicking its refresh icon checks
@@ -65,8 +69,10 @@ Actual native popup screenshots with staged demo data—not real sync incidents.
 
 ![Popup showing the watcher stopped and its resume icon](screenshots/paused-watcher.png)
 
-Pausing stops the watcher service; the current health policy marks a stopped
-watcher red. This screenshot is a demo, not a change to the live watcher.
+Pausing stops the watcher service and shows a blue state unless a real sync error
+is reported. This screenshot is a demo, not a change to the live watcher.
+
+Blue bar icon: ![Paused mise bar icon](screenshots/paused-tray-icon.png)
 
 See [popup screenshots](screenshots/README.md) for staged green/yellow/red examples
 and [the publishing checklist](docs/PUBLISHING.md) for private testing, public

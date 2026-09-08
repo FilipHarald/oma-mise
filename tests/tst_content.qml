@@ -119,4 +119,22 @@ TestCase {
     content.status = {summary: "Dotfiles error", level: "red", details: []}
     compare(findChild(content, "statusHeading").color, "#ee7373")
   }
+  function test_reasons_before_counts() {
+    var original = content.status
+    content.status = {summary: "Dotfiles error", level: "red", details: ["Files: 7 | Checkpoints: 28", "Last publish: today 13:52", "Sync conflicts need review"]}
+    waitForRendering(content)
+    var reason = findChild(content, "statusReason")
+    verify(reason !== null)
+    var counts = findChild(content, "filesIcon").parent
+    verify(reason.mapToItem(content, 0, reason.height).y < counts.y)
+    verify(reason.mapToItem(content, 0, 0).y > findChild(content, "statusHeading").mapToItem(content, 0, 0).y)
+    content.status = original
+  }
+  function test_stopped_color() {
+    content.watcherState = "stopped"
+    compare(findChild(content, "watcherLabel").color, "#7aa2f7")
+    compare(findChild(content, "watcherLabel").opacity, 0.55)
+    content.status = {summary: "Dotfiles watcher stopped", level: "blue", details: []}
+    compare(findChild(content, "statusHeading").color, "#7aa2f7")
+  }
 }

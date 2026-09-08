@@ -34,13 +34,14 @@ function watcher(text) {
 function decode(text) {
   try {
     var data = JSON.parse(text)
-    if (["green", "yellow", "red"].indexOf(data.level) !== -1
+    if (["green", "yellow", "red", "blue"].indexOf(data.level) !== -1
         && typeof data.summary === "string" && Array.isArray(data.details)) return data
   } catch (e) {}
   return {level: "yellow", summary: "Status unavailable", details: ["Could not read mise status. Try Refresh."]}
 }
 
 function colorFor(level) {
+  if (level === "blue") return "#7aa2f7"
   if (level === "green") return "#72c78b"
   if (level === "red") return "#ee7373"
   return "#e5bf69"

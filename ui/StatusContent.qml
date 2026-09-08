@@ -38,12 +38,12 @@ Column {
     font.family: root.fontFamily
     font.pixelSize: root.captionSize
   }
-  RowLayout {
+  Column {
     width: parent.width
-    spacing: 12 * root.unit
+    spacing: 5 * root.unit
     Text {
       objectName: "statusHeading"
-      Layout.fillWidth: true
+      width: parent.width
       text: root.status.summary
       textFormat: Text.PlainText
       elide: Text.ElideRight
@@ -51,6 +51,31 @@ Column {
       font.family: root.fontFamily
       font.pixelSize: root.bodySize
       font.bold: true
+    }
+    Text {
+      objectName: "statusReason"
+      width: parent.width
+      text: (root.status.details || []).filter(function(line) {
+        return line.indexOf("Watcher: ") !== 0
+          && !/^Files: (\d+|unknown) \| Checkpoints: (\d+|unknown)$/.test(line)
+          && !/^Last (publish|fetch|apply): /.test(line)
+      }).join("\n")
+      visible: text !== ""
+      textFormat: Text.PlainText
+      wrapMode: Text.Wrap
+      color: root.foreground
+      font.family: root.fontFamily
+      font.pixelSize: root.captionSize
+    }
+    Text {
+      visible: root.watcherError !== ""
+      width: parent.width
+      text: root.watcherError
+      textFormat: Text.PlainText
+      wrapMode: Text.Wrap
+      color: Presentation.colorFor("red")
+      font.family: root.fontFamily
+      font.pixelSize: root.captionSize
     }
   }
     Row {
@@ -96,7 +121,7 @@ Column {
       objectName: "watcherLabel"
       anchors.verticalCenter: parent.verticalCenter
       text: "Watcher " + root.watcherState
-      color: root.foreground
+      color: root.watcherState === "stopped" ? Presentation.colorFor("blue") : root.foreground
       opacity: 0.55
       font.family: root.fontFamily
       font.pixelSize: root.captionSize
@@ -123,7 +148,7 @@ Column {
         text: watcherButton.text
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        color: root.foreground
+        color: root.watcherState === "stopped" ? Presentation.colorFor("blue") : root.foreground
         opacity: watcherButton.enabled ? 0.8 : 0.35
         font.family: root.fontFamily
         font.pixelSize: root.captionSize
@@ -131,18 +156,8 @@ Column {
       onClicked: root.watcherToggleRequested()
     }
   }
-  Text {
-    visible: root.watcherError !== ""
-    width: parent.width
-    text: root.watcherError
-    textFormat: Text.PlainText
-    wrapMode: Text.Wrap
-    color: Presentation.colorFor("red")
-    font.family: root.fontFamily
-    font.pixelSize: root.captionSize
-  }
   Repeater {
-    model: (root.status.details || []).filter(function(line) { return line.indexOf("Watcher: ") !== 0 && !/^Files: (\d+|unknown) \| Checkpoints: (\d+|unknown)$/.test(line) })
+    model: (root.status.details || []).filter(function(line) { return /^Last (publish|fetch|apply): /.test(line) })
     delegate: Item {
       id: detail
       required property string modelData

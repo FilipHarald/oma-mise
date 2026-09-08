@@ -113,7 +113,6 @@ class StatusTests(unittest.TestCase):
             ('sync', 'failing_since', STAMP),
             ('sync', 'consecutive_failures', 1),
             ('history', 'unavailable', 'SECRET'),
-            ('history', 'watcher', 'stopped'),
         ):
             with self.subTest(field=field):
                 payload = healthy()
@@ -123,6 +122,16 @@ class StatusTests(unittest.TestCase):
                 result = self.evaluate(payload)
                 self.assertEqual(result['level'], 'red')
                 self.assertNotIn('SECRET', str(result))
+
+    def test_stopped_watcher_is_blue_unless_sync_error(self):
+        payload = healthy()
+        payload['history']['watcher'] = 'stopped'
+        payload['edits'] = ['private/path']
+        result = self.evaluate(payload)
+        self.assertEqual(result['level'], 'blue')
+        self.assertEqual(result['summary'], 'Dotfiles watcher stopped')
+        payload['history']['sync']['conflicts'] = ['private/path']
+        self.assertEqual(self.evaluate(payload)['level'], 'red')
 
     def test_unknown_or_malformed_status_never_green(self):
         cases = [None, [], {}, {'history': None}]

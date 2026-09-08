@@ -30,12 +30,14 @@ TestCase {
     compare(Presentation.decode('{"level":"green","summary":"Synced","details":[]}').level, "green")
     compare(Presentation.decode('broken').level, "yellow")
     compare(Presentation.decode('{"level":"green"}').level, "yellow")
-    compare(Presentation.decode('{"level":"blue","summary":"Oops","details":[]}').level, "yellow")
+    compare(Presentation.decode('{"level":"blue","summary":"Stopped","details":[]}').level, "blue")
+    compare(Presentation.decode('{"level":"invalid","summary":"Oops","details":[]}').level, "yellow")
   }
   function test_colors() {
     compare(Presentation.colorFor("green"), "#72c78b")
     compare(Presentation.colorFor("yellow"), "#e5bf69")
     compare(Presentation.colorFor("red"), "#ee7373")
+    compare(Presentation.colorFor("blue"), "#7aa2f7")
     compare(Presentation.colorFor("unknown"), "#e5bf69")
   }
 }

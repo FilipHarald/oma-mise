@@ -13,6 +13,7 @@ TestCase {
       {tag: "green", level: "green", asset: "green"},
       {tag: "yellow", level: "yellow", asset: "yellow"},
       {tag: "red", level: "red", asset: "red"},
+      {tag: "blue", level: "blue", asset: "blue"},
       {tag: "unknown", level: "unknown", asset: "yellow"}
     ]
   }
