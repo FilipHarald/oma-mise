@@ -3,6 +3,7 @@
   "id": "filipharald.oma-mise",
   "name": "Mise dotfiles",
   "version": "0.0.0",
+  "author": "FilipHarald",
   "license": "MIT",
   "description": "Dotfile sync health and watcher controls for mise",
   "kinds": [
