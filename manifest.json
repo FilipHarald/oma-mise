@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "io.github.filipharald.oma-mise",
+  "id": "filipharald.oma-mise",
   "name": "Mise dotfiles",
   "version": "0.1.0",
   "license": "MIT",

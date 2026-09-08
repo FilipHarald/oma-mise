@@ -40,10 +40,16 @@ class SecurityContractTests(unittest.TestCase):
     def test_readme_documents_removal_and_backup_residue(self):
         source = (ROOT / 'README.md').read_text()
         self.assertIn('## Removing', source)
-        self.assertIn('omarchy plugin remove io.github.filipharald.oma-mise', source)
-        self.assertIn('shell.json.backup-*', source)
-        self.assertIn('entire shared shell config', source)
+        self.assertIn('omarchy plugin remove filipharald.oma-mise', source)
         self.assertIn('Removing the monitor does not', source)
+
+    def test_plugin_id_is_consistent_and_has_no_reverse_domain_prefix(self):
+        manifest = (ROOT / 'manifest.json').read_text()
+        panel = (ROOT / 'Panel.qml').read_text()
+        readme = (ROOT / 'README.md').read_text()
+        for source in (manifest, panel, readme):
+            self.assertIn('filipharald.oma-mise', source)
+            self.assertNotIn('io.github.', source)
 
 
 if __name__ == '__main__':

@@ -14,9 +14,8 @@ is a checklist, not authorization to change visibility or publish social posts.
   trademark permission or upstream endorsement.
 - History review is waived by the repository owner; no history audit was performed.
 - [x] Generalize installation paths; examples use `~/.local/share/oma-mise`.
-- [x] Use `io.github.filipharald.oma-mise`, following Omacoach's reverse-domain ID
-  convention while retaining the `oma-mise` repository name. See
-  [migration instructions](MIGRATION.md) for existing `local.mise-status` installs.
+- [x] Use the plugin ID `filipharald.oma-mise` while retaining the `oma-mise`
+  repository name.
 - [ ] Run the README verification commands and test on a clean Omarchy 4 machine
   with the documented mise history setup. A fresh authenticated clone of the
   private repo passed manifest validation during screenshot preparation; that is
@@ -42,8 +41,7 @@ native green popup with staged demo data, with image metadata stripped.
 - The remote marketplace snapshot resolver requires a public repository. While
   private, run the analyzer on a local immutable Git snapshot instead and label
   that result as local analysis, not marketplace validation or approval.
-- Review the [removal disclosure](../README.md#removing) and the
-  [migration safety contract](MIGRATION.md) along with runtime code.
+- Review the [removal disclosure](../README.md#removing) along with runtime code.
 
 No submission, release, tag, or visibility change is authorized by this checklist.
 
@@ -68,11 +66,10 @@ omarchy plugin add git@github.com:FilipHarald/oma-mise.git --enable
 
 These are **new-install** commands. If the plugin is already installed as a
 development symlink, keep that checkout and symlink instead of installing a duplicate.
-Migrate old IDs using [the migration guide](MIGRATION.md) first.
 For installations managed by the Git installer, updates are:
 
 ```sh
-omarchy plugin update io.github.filipharald.oma-mise
+omarchy plugin update filipharald.oma-mise
 ```
 
 Plugins run as unsandboxed code in the desktop shell. Users should review the code

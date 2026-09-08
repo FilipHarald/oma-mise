@@ -8,8 +8,8 @@ import "Presentation.js" as Presentation
 
 Panel {
   id: root
-  moduleName: "io.github.filipharald.oma-mise"
-  ipcTarget: "io.github.filipharald.oma-mise"
+  moduleName: "filipharald.oma-mise"
+  ipcTarget: "filipharald.oma-mise"
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
   readonly property int barSlot: Style.bar.iconFont + Style.space(10)
   readonly property real openPanelIndicatorWidth: Style.bar.iconFont
