@@ -46,6 +46,20 @@ has a 15-second timeout. No root access is used.
 
 ## Screenshots and publishing
 
+Actual native popup screenshots with staged demo data—not real sync incidents.
+
+### Green — synced
+
+![Green popup showing dotfiles synced](screenshots/green-synced.png)
+
+### Yellow — pending changes
+
+![Yellow popup showing pending dotfile edits](screenshots/yellow-pending.png)
+
+### Red — sync conflict
+
+![Red popup showing a sync conflict](screenshots/red-conflict.png)
+
 See [popup screenshots](screenshots/README.md) for staged green/yellow/red examples
 and [the publishing checklist](docs/PUBLISHING.md) for private testing, public
 distribution and release preparation. The repository is currently private.
