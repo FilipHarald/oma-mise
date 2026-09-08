@@ -58,6 +58,14 @@ These are native popup captures with staged demo data—not real sync incidents.
 
 More capture details are in [`screenshots/README.md`](screenshots/README.md).
 
+## Release notes
+
+### v0.0.0
+
+- Initial release of the native Omarchy bar widget.
+- Shows mise dotfiles status, tracked-file counts, checkpoints, and sync activity.
+- Includes manual refresh, watcher controls, and copy-only review commands.
+
 ## Requirements
 
 - [mise 2026.9.3 or newer](https://mise.jdx.dev/), with

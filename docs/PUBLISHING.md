@@ -16,16 +16,14 @@ is a checklist, not authorization to change visibility or publish social posts.
 - [x] Generalize installation paths; examples use `~/.local/share/oma-mise`.
 - [x] Use the plugin ID `filipharald.oma-mise` while retaining the `oma-mise`
   repository name.
-- [ ] Run the README verification commands and test on a clean Omarchy 4 machine
-  with the documented mise history setup. A fresh authenticated clone of the
-  private repo passed manifest validation during screenshot preparation; that is
-  not a full fresh-desktop installation test.
-- [ ] Add the Git installation command below and release notes to the public README.
+- [x] Run the README verification commands and test on another Omarchy 4 machine
+  with the documented mise history setup.
+- [x] Add the Git installation command below and release notes to the public README.
 - [ ] Only when explicitly approved: change GitHub visibility to public, then verify
   unauthenticated cloning works. No visibility change was performed here.
-- [ ] Recommended: tag the reviewed commit `v0.1.0` (matching the manifest) and
-  create a GitHub release with requirements, known limitations and screenshots.
-  Neither a release nor a tag is required by the Git-based installer.
+- [x] Tag the reviewed release commit `v0.0.0`, matching the manifest.
+- [ ] Optional: create a GitHub release with requirements, known limitations and
+  screenshots. A GitHub release is not required by the Git-based installer.
 
 ## Optional marketplace submission
 
@@ -43,7 +41,8 @@ native green popup with staged demo data, with image metadata stripped.
   that result as local analysis, not marketplace validation or approval.
 - Review the [removal disclosure](../README.md#removing) along with runtime code.
 
-No submission, release, tag, or visibility change is authorized by this checklist.
+No marketplace submission, GitHub release, or visibility change is authorized by
+this checklist.
 
 ## Git distribution
 
