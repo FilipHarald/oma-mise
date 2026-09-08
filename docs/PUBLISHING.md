@@ -6,9 +6,12 @@ is a checklist, not authorization to change visibility or publish social posts.
 ## Before making it public
 
 - [x] Add a license for the plugin code: [MIT](../LICENSE), copyright 2026 FilipHarald.
-- [ ] Confirm redistribution/attribution requirements for the bundled mise logo.
-  Its source is documented in `assets/README.md`; code licensing and logo rights
-  are separate questions.
+- [x] Confirm the bundled logo's MIT copyright license: upstream
+  `docs/public/logo-dark.svg` is covered by `docs/LICENSE` (copyright 2024 jdx).
+  The full notice is included in [assets/LICENSE-mise](../assets/LICENSE-mise);
+  [asset attribution](../assets/README.md) links the pinned source and license.
+  Keep that notice when redistributing the recolored SVGs. This does not imply
+  trademark permission or upstream endorsement.
 - [ ] Review the complete Git history, README and screenshots for private content.
   The README currently includes a local installation path. Remove or generalize
   machine-specific notes if undesired. Making the repo public exposes its history,
