@@ -52,7 +52,9 @@ Column {
       font.pixelSize: root.bodySize
       font.bold: true
     }
+  }
     Row {
+      anchors.horizontalCenter: parent.horizontalCenter
       visible: root.counts !== null
       spacing: 8 * root.unit
       Text {
@@ -83,7 +85,6 @@ Column {
         font.pixelSize: root.captionSize
       }
     }
-  }
   Row {
     id: watcherControls
     HoverHandler { id: watcherHover }

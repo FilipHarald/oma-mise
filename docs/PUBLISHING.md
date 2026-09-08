@@ -5,8 +5,7 @@ is a checklist, not authorization to change visibility or publish social posts.
 
 ## Before making it public
 
-- [ ] Choose and add a license for the plugin code. There is currently no LICENSE
-  file; making source public does not automatically grant reuse rights.
+- [x] Add a license for the plugin code: [MIT](../LICENSE), copyright 2026 FilipHarald.
 - [ ] Confirm redistribution/attribution requirements for the bundled mise logo.
   Its source is documented in `assets/README.md`; code licensing and logo rights
   are separate questions.

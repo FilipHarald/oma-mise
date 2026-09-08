@@ -8,13 +8,14 @@ They are not evidence of real pending edits or conflicts on the author's machine
 | [green-synced.png](green-synced.png) | Green: dotfiles synced |
 | [yellow-pending.png](yellow-pending.png) | Yellow: two pending edits |
 | [red-conflict.png](red-conflict.png) | Red: one sync conflict |
-| [states-overview.png](states-overview.png) | Side-by-side social image, labelled as demo states |
+| [paused-watcher.png](paused-watcher.png) | Watcher paused/stopped, with resume icon; red under current health policy |
+| [states-overview.png](states-overview.png) | Four-state social image, labelled as demo states |
 
-![Three demo states](states-overview.png)
+![Four demo states](states-overview.png)
 
 Captured on 8 September 2026, using the user's existing popup width and desktop
-theme. The yellow summary is naturally elided at that width; the explanation
-below it is visible. No UI text was composited over the individual screenshots.
+theme. Files and checkpoints have their own centered row; the yellow summary
+now fits without elision. No UI text was composited over the individual screenshots.
 The overview only adds spacing and demo labels around the original crops.
 
 ## Capture safety

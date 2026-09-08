@@ -16,7 +16,8 @@ using Omarchy's native panel components rather than a separate tray daemon.
   watcher require attention. Failures take precedence over pending changes.
 
 The popup has a muted title, a status-colored summary, watcher start/stop controls,
-file/checkpoint icons, and publish/fetch/apply rows with right-aligned timestamps.
+file/checkpoint icons on their own centered row, and publish/fetch/apply rows
+with right-aligned timestamps.
 Below a divider, a live `Next check in 30s` countdown leads to the next status poll;
 longer durations use hours/minutes/seconds. The next poll is scheduled 30 seconds
 after a check completes. Opening the popup or clicking its refresh icon checks
@@ -60,9 +61,21 @@ Actual native popup screenshots with staged demo data—not real sync incidents.
 
 ![Red popup showing a sync conflict](screenshots/red-conflict.png)
 
+### Paused watcher
+
+![Popup showing the watcher stopped and its resume icon](screenshots/paused-watcher.png)
+
+Pausing stops the watcher service; the current health policy marks a stopped
+watcher red. This screenshot is a demo, not a change to the live watcher.
+
 See [popup screenshots](screenshots/README.md) for staged green/yellow/red examples
 and [the publishing checklist](docs/PUBLISHING.md) for private testing, public
 distribution and release preparation. The repository is currently private.
+
+## License
+
+The plugin code is licensed under the [MIT License](LICENSE). The bundled mise
+logo retains its upstream ownership; see [asset attribution](assets/README.md).
 
 ## Requirements
 

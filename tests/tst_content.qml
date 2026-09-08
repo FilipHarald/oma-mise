@@ -90,7 +90,8 @@ TestCase {
     verify(findChild(content, "checksSeparator").y < findChild(content, "checksRow").y)
     var counts = findChild(content, "filesIcon").parent
     var heading = findChild(content, "statusHeading")
-    compare(Math.round(counts.mapToItem(content, 0, counts.height / 2).y), Math.round(heading.mapToItem(content, 0, heading.height / 2).y))
+    verify(counts.mapToItem(content, 0, 0).y >= heading.mapToItem(content, 0, heading.height).y)
+    verify(counts.mapToItem(content, 0, counts.height).y <= publish.y)
     compare(findChild(content, "filesIcon").color, content.foreground)
     var countdown = findChild(content, "countdown")
     var watcher = findChild(content, "watcherLabel")
