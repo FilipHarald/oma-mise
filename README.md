@@ -31,18 +31,31 @@ remains cached.
 ## What it does
 
 - Shows local mise dotfiles health in the Omarchy bar.
-- Displays file/checkpoint counts and recent publish, fetch, and apply activity.
+- Displays publish, fetch, and apply ages with full local dates on hover.
+- Expands file/checkpoint counts into up to 10 recently changed managed files
+  and the 10 newest checkpoint messages.
 - Refreshes every 30 seconds, on panel open, or from the refresh controls.
 - Starts or stops only the existing `dev.mise.mise-history.service` user unit.
-- Copies a fixed, home-scoped review command when attention is needed. It never
-  launches a terminal/editor or executes the copied command.
+- Copies a fixed, home-scoped review command when attention is needed.
+- When mise reports changed bootstrap declarations with no conflicting work,
+  offers a two-step confirmed action that runs the complete bootstrap without
+  `--yes`, then verifies and refreshes status.
 
-Status checks run `mise bootstrap dotfiles status --json` from your home directory.
-No dotfile contents, credentials, raw command errors, or status snapshots are
-stored or shown. Trusted mise templates may execute while mise checks status.
+Status checks run `mise bootstrap dotfiles status --json` and a bounded
+`mise bootstrap dotfiles history --json --limit 50` from your home directory.
+The popup shows managed paths and user-authored checkpoint messages, which may
+themselves contain sensitive names. It does not show dotfile contents or raw command
+errors, and it does not store status snapshots. Trusted mise templates may execute
+while mise checks status.
 
 Starting the watcher resumes your existing mise workflow and can publish or apply
 pending changes. It does not change service enablement or mise configuration.
+
+The declaration action runs your complete configured `mise bootstrap`. Unchanged
+resources are skipped, but configured hooks and tasks may run again, templates may
+execute while checking state, and changed declarations may affect packages, tools,
+repositories, services, dotfiles, or system settings. If mise cannot complete
+noninteractively, the plugin stops and asks you to finish in a terminal.
 
 ## Screenshots
 
@@ -59,6 +72,12 @@ These are native popup captures with staged demo data—not real sync incidents.
 More capture details are in [`screenshots/README.md`](screenshots/README.md).
 
 ## Release notes
+
+### v0.1.0
+
+- Adds compact relative publish, fetch, and apply activity with full dates on hover.
+- Adds expandable recent-file and checkpoint history.
+- Adds a guarded, two-step bootstrap action for changed declarations.
 
 ### v0.0.0
 
@@ -81,7 +100,9 @@ For a development symlink, Omarchy removes only the installed link and keeps the
 source checkout. For a Git-managed installation it removes that installed clone;
 save local edits first. Removing the monitor does not stop or delete the existing
 mise watcher, configuration, dotfiles, history, or remotes. It installs no
-credentials, sudoers/polkit rules, packages, hooks, or additional services.
+credentials, sudoers/polkit rules, packages, hooks, or additional services by
+itself; the explicitly confirmed bootstrap action can apply whatever your existing
+mise configuration declares.
 
 ## Development
 

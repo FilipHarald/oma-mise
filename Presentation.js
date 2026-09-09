@@ -15,6 +15,16 @@ function age(timestamp, now) {
   return seconds < 0 ? "in " + label : label + " ago"
 }
 
+function fullDate(timestamp) {
+  var time = typeof timestamp === "string" ? Date.parse(timestamp) : NaN
+  if (!isFinite(time)) return "Date unavailable"
+  var date = new Date(time)
+  var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  function pad(value) { return value < 10 ? "0" + value : String(value) }
+  return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear()
+    + ", " + pad(date.getHours()) + ":" + pad(date.getMinutes())
+}
+
 function duration(seconds) {
   var value = Math.max(0, Math.ceil(seconds))
   var hours = Math.floor(value / 3600)
@@ -51,7 +61,18 @@ function decode(text) {
     var data = parsePayload(text, 65536)
     if (validStatus(data)) return data
   } catch (e) {}
-  return {level: "yellow", summary: "Status unavailable", details: ["Could not read mise status. Try Refresh."]}
+  return {level: "yellow", summary: "Status unavailable", details: ["Could not read mise status. Try Refresh."],
+    actions: [], needs_attention: true, history_available: false, checkpoints: [], recent_files: []}
+}
+
+function actionResult(text) {
+  try {
+    var data = parsePayload(text, 4096)
+    if (keysOnly(data, ["ok", "error"]) && typeof data.ok === "boolean"
+        && safeString(data.error, 512, false)
+        && ((data.ok && !data.error) || (!data.ok && data.error))) return data
+  } catch (e) {}
+  return {ok: false, error: "Bootstrap result unavailable"}
 }
 
 // Bound nesting and reject duplicate/oversized object keys BEFORE JSON.parse.
@@ -73,12 +94,12 @@ function parsePayload(text, limit) {
         if (i - begin > 64) throw new Error("key limit")
         var key = JSON.parse(text.slice(begin, i + 1))
         var frame = stack[stack.length - 1]
-        if (frame.indexOf(key) !== -1 || frame.length >= 6) throw new Error("keys")
+        if (frame.indexOf(key) !== -1 || frame.length >= 11) throw new Error("keys")
         frame.push(key)
       }
     } else if (c === '"') { inString = true; begin = i }
     else if (c === "{" || c === "[") {
-      if (stack.length >= 2) throw new Error("depth")
+      if (stack.length >= 3) throw new Error("depth")
       stack.push([])
     } else if (c === "}" || c === "]") stack.pop()
   }
@@ -114,7 +135,8 @@ function timestamp(value) {
 }
 
 function validStatus(data) {
-  return keysOnly(data, ["level", "summary", "details", "checked_at", "checked_label", "timestamps"])
+  return keysOnly(data, ["level", "summary", "details", "actions", "needs_attention", "history_available",
+      "checkpoints", "recent_files", "checked_at", "checked_label", "timestamps"])
     && ["green", "yellow", "red", "blue"].indexOf(data.level) !== -1
     && safeString(data.summary, 256, false) && data.summary.length > 0 && Array.isArray(data.details)
     && data.details.length <= 32 && data.details.every(function(line) {
@@ -124,6 +146,20 @@ function validStatus(data) {
         return n === "unknown" || (n.length <= 16 && Number.isSafeInteger(Number(n)) && Number(n) >= 0)
       })
     })
+    && (data.actions === undefined || (Array.isArray(data.actions) && data.actions.length <= 1
+      && data.actions.every(function(action) { return action === "bootstrap" })))
+    && (data.needs_attention === undefined || typeof data.needs_attention === "boolean")
+    && (data.history_available === undefined || typeof data.history_available === "boolean")
+    && (data.checkpoints === undefined || (Array.isArray(data.checkpoints) && data.checkpoints.length <= 10
+      && data.checkpoints.every(function(item) {
+        return keysOnly(item, ["message", "at"]) && safeString(item.message, 256, false)
+          && item.message.length > 0 && timestamp(item.at)
+      })))
+    && (data.recent_files === undefined || (Array.isArray(data.recent_files) && data.recent_files.length <= 10
+      && data.recent_files.every(function(item) {
+        return keysOnly(item, ["path", "at"]) && safeString(item.path, 512, false)
+          && item.path.length > 0 && timestamp(item.at)
+      })))
     && (data.checked_at === undefined || timestamp(data.checked_at))
     && (data.checked_label === undefined || safeString(data.checked_label, 64, false))
     && (data.timestamps === undefined || (keysOnly(data.timestamps, ["publish", "fetch", "apply"])

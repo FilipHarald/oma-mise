@@ -167,8 +167,10 @@ class RuntimeTests(unittest.TestCase):
             executable = r.mise_executable(home)
             local.unlink()
             local.symlink_to('/usr/bin/true')
-            with self.assertRaises(OSError):
-                r.run([executable, 'bootstrap', 'dotfiles', 'status'], cwd=home)
+            for args in (['bootstrap', 'dotfiles', 'status'],
+                         ['bootstrap', '--silent']):
+                with self.subTest(args=args), self.assertRaises(OSError):
+                    r.run([executable, *args], cwd=home)
 
     def test_stream_limits_reject_stdout_and_stderr(self):
         self.assertTrue((ROOT / 'runtime.py').exists(), 'bounded runtime must exist')

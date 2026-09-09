@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "filipharald.oma-mise",
   "name": "Mise dotfiles",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "author": "FilipHarald",
   "license": "MIT",
   "description": "Dotfile sync health and watcher controls for mise",

@@ -16,6 +16,7 @@ TestCase {
   }
   SignalSpy { id: refreshSpy; target: content; signalName: "refreshRequested" }
   SignalSpy { id: watcherSpy; target: content; signalName: "watcherToggleRequested" }
+  SignalSpy { id: bootstrapSpy; target: content; signalName: "bootstrapRequested" }
   SignalSpy { id: copySpy; target: content; signalName: "copyRequested" }
   function test_copy_commands_not_text_clicks() {
     var original = content.status
@@ -64,6 +65,7 @@ TestCase {
     content.watcherCanControl = false
   }
   function test_date_hover() {
+    var original = content.status
     var times = {}
     for (var field of ["publish", "fetch", "apply"]) times[field] = new Date(Date.now() - 5000).toISOString()
     content.status = Object.assign({}, content.status, {timestamps: times})
@@ -72,12 +74,13 @@ TestCase {
       waitForRendering(date)
       mouseMove(date, date.width - 2, date.height / 2)
       tryVerify(function() { return date.ToolTip.visible })
-      verify(/^\d+s ago$/.test(date.ToolTip.text))
-      var first = date.ToolTip.text
-      tryVerify(function() { return date.ToolTip.text !== first }, 2000)
+      verify(/^\d+s$/.test(date.text))
+      compare(date.opacity, 0.55)
+      verify(/^\d{1,2} [A-Z][a-z]{2} \d{4}, \d{2}:\d{2}$/.test(date.ToolTip.text))
       mouseMove(content, 0, 0)
       tryVerify(function() { return !date.ToolTip.visible })
     }
+    content.status = original
   }
   function test_footer_hover() {
     content.watcherState = "running"
@@ -126,19 +129,27 @@ TestCase {
     var fetch = findChild(content, "activity-fetch")
     var apply = findChild(content, "activity-apply")
     verify(publish !== null && fetch !== null && apply !== null)
-    compare(findChild(publish, "activityDate").text, "today 13:52")
-    compare(findChild(fetch, "activityDate").text, "yesterday 09:00")
-    compare(findChild(apply, "activityDate").text, "4 sep 08:03")
+    compare(findChild(publish, "activityDate").text, "Time unavailable")
+    compare(findChild(fetch, "activityDate").text, "Time unavailable")
+    compare(findChild(apply, "activityDate").text, "Time unavailable")
     compare(findChild(publish, "activityDate").horizontalAlignment, Text.AlignRight)
     verify(findChild(publish, "activityIcon").text !== findChild(fetch, "activityIcon").text)
+    var publishPoint = publish.mapToItem(content, 0, 0)
+    var fetchPoint = fetch.mapToItem(content, 0, 0)
+    var applyPoint = apply.mapToItem(content, 0, 0)
+    compare(Math.round(publishPoint.y), Math.round(fetchPoint.y))
+    compare(Math.round(fetchPoint.y), Math.round(applyPoint.y))
+    verify(publishPoint.x < fetchPoint.x && fetchPoint.x < applyPoint.x)
     compare(findChild(content, "keyboardHint"), null)
     verify(findChild(content, "filesIcon").text !== "")
     verify(findChild(content, "checkpointsIcon").text !== "")
     verify(findChild(content, "checksSeparator").y < findChild(content, "checksRow").y)
-    var counts = findChild(content, "filesIcon").parent
+    var files = findChild(content, "filesSection")
+    var checkpoints = findChild(content, "checkpointsSection")
     var heading = findChild(content, "statusHeading")
-    verify(counts.mapToItem(content, 0, 0).y >= heading.mapToItem(content, 0, heading.height).y)
-    verify(counts.mapToItem(content, 0, counts.height).y <= publish.y)
+    verify(files.y > apply.y)
+    verify(checkpoints.y > files.y)
+    verify(files.y >= heading.mapToItem(content, 0, heading.height).y)
     compare(findChild(content, "filesIcon").color, content.foreground)
     var countdown = findChild(content, "countdown")
     var watcher = findChild(content, "watcherLabel")
@@ -147,6 +158,40 @@ TestCase {
     var countdownPoint = countdown.mapToItem(content, 0, 0)
     compare(Math.round(watcherPoint.y), Math.round(countdownPoint.y))
     verify(watcherPoint.x > refresh.mapToItem(content, refresh.width, 0).x)
+  }
+  function test_history_sections_expand_and_collapse() {
+    var original = content.status
+    var at = new Date(Date.now() - 60000).toISOString()
+    content.status = {summary: "Dotfiles synced", level: "green",
+      details: ["Files: 7 | Checkpoints: 28"], history_available: true,
+      recent_files: [{path: "~/.bashrc", at: at}],
+      checkpoints: [{message: "updated shell", at: at}]}
+    content.filesExpanded = false
+    content.checkpointsExpanded = false
+    mouseClick(findChild(content, "filesHeader"))
+    verify(content.filesExpanded)
+    tryCompare(findChild(content, "filePath"), "text", "~/.bashrc")
+    verify(/ ago$/.test(findChild(content, "fileAge").text))
+    mouseClick(findChild(content, "checkpointsHeader"))
+    verify(content.checkpointsExpanded)
+    tryCompare(findChild(content, "checkpointMessage"), "text", "updated shell")
+    verify(/ ago$/.test(findChild(content, "checkpointAge").text))
+    mouseClick(findChild(content, "filesChevron"))
+    mouseClick(findChild(content, "checkpointsChevron"))
+    verify(!content.filesExpanded && !content.checkpointsExpanded)
+    var filesHeader = findChild(content, "filesHeader")
+    filesHeader.forceActiveFocus()
+    keyClick(Qt.Key_Return)
+    verify(content.filesExpanded)
+    keyClick(Qt.Key_Space)
+    verify(!content.filesExpanded)
+    keyClick(Qt.Key_Enter)
+    verify(content.filesExpanded)
+    content.clock = 0
+    content.panelActive = true
+    verify(content.clock > 0)
+    content.panelActive = false
+    content.status = original
   }
   function test_refresh() {
     refreshSpy.clear()
@@ -162,6 +207,31 @@ TestCase {
     compare(refreshSpy.count, 2)
     content.refreshing = false
   }
+  function test_bootstrap_requires_confirmation() {
+    var original = content.status
+    content.status = {summary: "Dotfiles need attention", level: "yellow",
+      details: ["Changed bootstrap declarations need applying"], actions: ["bootstrap"]}
+    var button = findChild(content, "bootstrapButton")
+    verify(button !== null)
+    verify(button.visible)
+    waitForRendering(button)
+    bootstrapSpy.clear()
+    mouseClick(button)
+    compare(bootstrapSpy.count, 0)
+    verify(content.bootstrapArmed)
+    compare(button.text, "Confirm complete bootstrap")
+    compare(button.enabled, false)
+    mouseClick(button)
+    compare(bootstrapSpy.count, 0)
+    tryVerify(function() { return button.enabled }, 1000)
+    mouseClick(button)
+    compare(bootstrapSpy.count, 1)
+    verify(!content.bootstrapArmed)
+    content.bootstrapBusy = true
+    compare(button.enabled, false)
+    content.bootstrapBusy = false
+    content.status = original
+  }
   function test_status_color() {
     content.status = {summary: "Dotfiles error", level: "red", details: []}
     compare(findChild(content, "statusHeading").color, "#ee7373")
@@ -172,8 +242,8 @@ TestCase {
     waitForRendering(content)
     var reason = findChild(content, "statusReason")
     verify(reason !== null)
-    var counts = findChild(content, "filesIcon").parent
-    verify(reason.mapToItem(content, 0, reason.height).y < counts.y)
+    var files = findChild(content, "filesSection")
+    verify(reason.mapToItem(content, 0, reason.height).y < files.y)
     verify(reason.mapToItem(content, 0, 0).y > findChild(content, "statusHeading").mapToItem(content, 0, 0).y)
     content.status = original
   }

@@ -69,12 +69,15 @@ Panel {
           id: content
           width: scroll.width
           status: StatusStore.status
+          panelActive: root.opened
           refreshing: StatusStore.refreshing
           remainingSeconds: StatusStore.remainingSeconds
           watcherState: StatusStore.watcher.state
           watcherCanControl: StatusStore.watcher.can_control
           watcherBusy: StatusStore.watcherBusy
           watcherError: StatusStore.controlError || StatusStore.watcher.error
+          bootstrapBusy: StatusStore.bootstrapBusy
+          bootstrapError: StatusStore.bootstrapError
           foreground: Color.foreground
           fontFamily: root.fontFamily
           bodySize: Style.font.body
@@ -82,6 +85,7 @@ Panel {
           unit: Style.space(1)
           onRefreshRequested: StatusStore.refresh()
           onWatcherToggleRequested: StatusStore.toggleWatcher()
+          onBootstrapRequested: StatusStore.runBootstrap()
           onCopyRequested: function(command) {
             clipboard.copy(command)
           }

@@ -14,21 +14,20 @@ They are not evidence of real pending edits or conflicts on the author's machine
 
 ![Four demo states](states-overview.png)
 
-Captured on 8 September 2026, using the user's existing popup width and desktop
-theme. Files and checkpoints have their own centered row; the yellow summary
-now fits without elision. No UI text was composited over the individual screenshots.
-Reasons sit directly below the summary, before the counts. The stopped state is
-blue; real sync errors would still take priority as red.
+Captured on 9 September 2026, using the user's existing popup width and desktop
+theme. Publish, fetch, and apply activity shares one compact row. Files and
+checkpoints are separate expandable rows. No UI text was composited over the
+individual screenshots. Reasons sit directly below the summary. The stopped state
+is blue; real sync errors would still take priority as red.
 The overview only adds spacing and demo labels around the original crops.
 
 ## Capture safety
 
-A temporary copy of the plugin used deterministic display-only status helpers.
-The demo watcher helper never invoked systemctl and disabled its action button.
-The installed plugin symlink was temporarily switched to this copy, the shell
-restarted, each native popup captured with grim, and the symlink restored in a
-`finally` block. The actual mise watcher was not stopped or changed. After capture,
-the original plugin path and active watcher service were verified.
+Temporary deterministic display-only status helpers were routed through the live
+development checkout. The demo watcher helper never invoked systemctl and disabled
+its action button. The shell was restarted, each native popup was captured with
+grim, and the temporary helpers were removed before restoring the real status and
+watcher paths. The actual mise watcher was not stopped or changed.
 
 Images are tightly cropped to the popup: no other windows, desktop text, file
 paths, repository URLs or credentials are included. Files/checkpoint counts and

@@ -42,7 +42,7 @@ def _guardian(argv, cwd, env, control, out, err, timeout):
     try:
         executable_fd = None
         try:
-            if argv[1:3] == ['bootstrap', 'dotfiles']:
+            if argv[1:2] == ['bootstrap']:
                 executable_fd = _open_mise(argv[0], Path(cwd))
             child = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL,
                                      stdout=out, stderr=err, start_new_session=True,
@@ -129,7 +129,7 @@ def run(argv, *, cwd=None, env=None, timeout=15, stdout_limit=1048576,
     """
     if not argv or not os.path.isabs(argv[0]):
         raise ValueError('absolute executable required')
-    if not 0 < timeout <= 90 or not 0 < stdout_limit <= 1048576 or not 0 < stderr_limit <= 1048576:
+    if not 0 < timeout <= 900 or not 0 < stdout_limit <= 1048576 or not 0 < stderr_limit <= 1048576:
         raise ValueError('invalid runtime limits')
     if env is None:
         env = environment()

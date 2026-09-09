@@ -104,6 +104,28 @@ class StatusTests(unittest.TestCase):
                 self.assertNotIn('private/path', str(result))
                 self.assertNotIn('credential', str(result))
 
+    def test_only_safe_declaration_drift_offers_bootstrap(self):
+        payload = healthy()
+        payload['history']['sync']['declarations_changed'] = True
+        result = self.evaluate(payload)
+        self.assertEqual(result['actions'], ['bootstrap'])
+        self.assertIn('Changed bootstrap declarations need applying', result['details'])
+        for path, value in ((('edits',), [{}]),
+                            (('history', 'pending_operations'), 1),
+                            (('history', 'sync', 'pending_applications'), [{}]),
+                            (('history', 'sync', 'conflicts'), [{}])):
+            changed = healthy()
+            changed['history']['sync']['declarations_changed'] = True
+            target = changed
+            for key in path[:-1]:
+                target = target[key]
+            target[path[-1]] = value
+            self.assertEqual(self.evaluate(changed)['actions'], [])
+        malformed = healthy()
+        malformed['history']['sync']['declarations_changed'] = True
+        del malformed['history']['sync']['conflicts']
+        self.assertEqual(self.evaluate(malformed)['actions'], [])
+
     def test_errors_override_pending(self):
         for section, field, value in (
             ('sync', 'conflicts', ['SECRET']),
@@ -197,14 +219,20 @@ class StatusTests(unittest.TestCase):
 
     def test_command_is_read_only_home_scoped_and_prefers_local_mise(self):
         self.assertTrue(hasattr(self.status, 'collect'), 'collect must exist')
+        history = [{'created_at': STAMP, 'description': 'saved settings',
+                    'changes': {'modified': ['~/.bashrc']}}]
         with patch.object(self.status.runtime, 'mise_executable', return_value=str(Path.home() / '.local/bin/mise')), \
-             patch.object(self.status.runtime, 'run', return_value=subprocess.CompletedProcess([], 0, json.dumps(healthy()), 'SECRET')) as run:
+             patch.object(self.status.runtime, 'run', side_effect=[
+                 subprocess.CompletedProcess([], 0, json.dumps(healthy()), 'SECRET'),
+                 subprocess.CompletedProcess([], 0, json.dumps(history), 'SECRET')]) as run:
             result = self.status.collect(now=NOW)
         self.assertEqual(result['level'], 'green')
-        run.assert_called_once_with(
+        self.assertEqual([call.args[0] for call in run.call_args_list], [
             [str(Path.home() / '.local/bin/mise'), 'bootstrap', 'dotfiles', 'status', '--json'],
-            cwd=str(Path.home()), env=self.status.runtime.environment(Path.home()),
-            timeout=15, stdout_limit=1048576, stderr_limit=65536)
+            [str(Path.home() / '.local/bin/mise'), 'bootstrap', 'dotfiles', 'history',
+             '--json', '--limit', '50']])
+        self.assertTrue(result['history_available'])
+        self.assertEqual(result['recent_files'][0]['path'], '~/.bashrc')
 
     def test_subprocess_failures_are_sanitized_yellow(self):
         cases = [FileNotFoundError('SECRET'), PermissionError('SECRET'),
@@ -280,10 +308,52 @@ class StatusTests(unittest.TestCase):
         self.assertIn('Conflicts: 1', ' | '.join(result['details']))
         self.assertLessEqual(len(self.evaluate({})['details']), 14)
 
+    def test_recent_history_is_bounded_unique_and_sanitized(self):
+        history = []
+        for index in range(12):
+            history.append({'created_at': (NOW - timedelta(minutes=index)).isoformat(),
+                            'description': f'checkpoint {index}',
+                            'changes': {'modified': [f'~/.file-{index}', '~/.shared']}})
+        payload = healthy()
+        payload['files'] = [
+            {'target': f'~/.file-{index}', 'state': 'tracked'} for index in range(12)
+        ] + [{'target': '~/.shared', 'state': 'tracked'}]
+        result = self.status.evaluate(payload, history_payload=history, now=NOW)
+        self.assertTrue(result['history_available'])
+        self.assertEqual(len(result['checkpoints']), 10)
+        self.assertEqual(len(result['recent_files']), 10)
+        self.assertEqual(result['recent_files'][0]['path'], '~/.file-0')
+        self.assertEqual(result['recent_files'][1]['path'], '~/.shared')
+        hostile = copy.deepcopy(history)
+        hostile[0]['description'] = 'spoof\u202e'
+        result = self.status.evaluate(payload, history_payload=hostile, now=NOW)
+        self.assertFalse(result['history_available'])
+        self.assertEqual(result['checkpoints'], [])
+        self.assertEqual(result['recent_files'], [])
+        hostile = copy.deepcopy(history)
+        hostile[0]['changes']['modified'] = [{}]
+        result = self.status.evaluate(payload, history_payload=hostile, now=NOW)
+        self.assertEqual(result['level'], 'green')
+        self.assertFalse(result['history_available'])
+
+    def test_recent_history_uses_description_and_removed_paths(self):
+        payload = healthy()
+        payload['files'] = [{'target': '~/.removed', 'state': 'tracked'}]
+        history = [{'created_at': STAMP, 'description': 'removed old settings',
+                    'summary': 'computed fallback', 'changes': {'removed': ['~/.removed']}}]
+        result = self.status.evaluate(payload, history_payload=history, now=NOW)
+        self.assertEqual(result['checkpoints'][0]['message'], 'removed old settings')
+        self.assertEqual(result['recent_files'][0]['path'], '~/.removed')
+
     def test_confirmed_healthy_sync(self):
         result = self.evaluate(healthy())
         self.assertEqual(result['level'], 'green')
-        self.assertEqual(set(result), {'level', 'summary', 'details', 'checked_at', 'checked_label', 'timestamps'})
+        self.assertEqual(set(result), {'level', 'summary', 'details', 'actions',
+                                      'needs_attention',
+                                      'history_available', 'checkpoints', 'recent_files',
+                                      'checked_at', 'checked_label', 'timestamps'})
+        self.assertEqual(result['actions'], [])
+        self.assertFalse(result['needs_attention'])
         self.assertEqual(result['timestamps'], dict.fromkeys(('publish', 'fetch', 'apply'), STAMP))
         self.assertEqual(result['checked_at'], STAMP)
         self.assertTrue(all(isinstance(item, str) for item in result['details']))
